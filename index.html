@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoForo - Comunidad Futurista</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #4a89dc;
+            --secondary: #65678f;
+            --dark: #1a1a2e;
+            --light: #e6e6ff;
+            --accent: #d770ad;async function loadInitialData() {
+
+            --glass: rgba(25, 25, 60, 0.7);
+            --success: #48cfad;
+            --warning: #f6bb42;
+            --danger: #ed5565;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            background-image: 
+                radial-gradient(circle at 25% 25%, var(--secondary) 0%, transparent 30%),
+                radial-gradient(circle at 75% 75%, var(--primary) 0%, transparent 30%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 250px 1fr 350px;
+            gap: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Modo pantalla completa para el chat */
+        .app-container.chat-fullscreen {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+            padding: 0;
+            gap: 0;
+        }
+
+        .app-container.chat-fullscreen .sidebar,
+        .app-container.chat-fullscreen .forum-panel {
+            display: none;
+        }
+
+        .app-container.chat-fullscreen .chat-panel {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            margin: 0;
+            max-width: 100%;
+            border: none;
+            box-shadow: none;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        /* Panel principal del foro */
+        .forum-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Panel del chat */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        /* Estilos comunes para tarjetas */
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(74, 137, 220, 0.4);
+        }
+
+        /* Encabezados */
+        h1, h2, h3, h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+
+        /* Formularios */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(20, 20, 40, 0.7);
+            border: 1px solid rgba(74, 137, 220, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.2);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Botones */
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(74, 137, 220, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 137, 220, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #37bc9b);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #da4453);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), #e6a23c);
+        }
+
+        .btn-sm {
+            padding: 8px 15px;
+            font-size: 0.8rem;
+        }
+
+        .btn-chat-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass);
+            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        /* Publicaciones */
+        .post {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .post::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .post-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            background-color: var(--primary);
+        }
+
+        .post-meta {
+            color: rgba(224, 224, 255, 0.7);
+            font-size: 0.8rem;
+        }
+
+        .post-content {
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .action-btn:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        /* Comentarios */
+        .comments-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comment {
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 2px solid rgba(74, 137, 220, 0.3);
+        }
+
+        /* Chat */
+        .chat-header {
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 12px;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), rgba(74, 137, 220, 0.3));
+            border-bottom-right-radius: 0;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 0;
+        }
+
+        .message.system {
+            align-self: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .message-user {
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            text-align: right;
+            margin-top: 5px;
+        }
+
+        .chat-input {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-form input {
+            flex: 1;
+            background: rgba(20, 20, 40, 0.7);
+        }
+
+        /* Grupos */
+        .group-card {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(30, 30, 60, 0.5);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .group-card:hover {
+            background: rgba(40, 40, 80, 0.7);
+        }
+
+        .group-card.active {
+            background: linear-gradient(135deg, rgba(74, 137, 220, 0.3), rgba(101, 103, 143, 0.3));
+            border-left: 3px solid var(--primary);
+        }
+
+        .group-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .group-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            margin-right: 10px;
+            background-color: var(--accent);
+        }
+
+        .group-name {
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .group-members {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        .member-avatar {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-right: 5px;
+            background-color: rgba(74, 137, 220, 0.5);
+        }
+
+        .group-last-message {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .group-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        /* Pestañas */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab:hover {
+            opacity: 1;
+        }
+
+        .tab.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            line-height: 1;
+            color: white;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 10px;
+            margin-left: 5px;
+        }
+
+        .badge-primary {
+            background-color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: var(--success);
+        }
+
+        .badge-warning {
+            background-color: var(--warning);
+        }
+
+        .badge-danger {
+            background-color: var(--danger);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(20, 20, 40, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--primary), var(--secondary));
+            border-radius: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border-radius: 15px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 20px rgba(74, 137, 220, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Avatar upload */
+        .avatar-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 15px;
+            border: 3px solid var(--primary);
+            background-color: var(--secondary);
+        }
+
+        /* Invite link */
+        .invite-link-container {
+            margin-top: 20px;
+            background: rgba(20, 20, 40, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .invite-link {
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            align-self: flex-end;
+        }
+
+        /* Login/Register forms */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .auth-switch a {
+            color: var(--primary);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr 350px;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .chat-panel {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Página de Login -->
+    <div id="login-page" class="auth-container">
+        <div class="auth-card">
+            <h2 class="auth-title">Iniciar Sesión</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Correo Electrónico</label>
+                    <input type="email" id="login-email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Iniciar Sesión</button>
+            </form>
+            <div class="auth-switch">
+                ¿No tienes una cuenta? <a id="show-register">Regístrate aquí</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Página de Registro -->
+    <div id="register-page" class="auth-container" style="display: none;">
+        <div class="auth-card">
+            <h2 class="auth-title">Crear Cuenta</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-name">Nombre para mostrar</label>
+                    <input type="text" id="register-name" placeholder="Cómo quieres que te llamen" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Correo Electrónico</label>
+                    <input type="email" id="register-email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Contraseña</label>
+                    <input type="password" id="register-password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirmar Contraseña</label>
+                    <input type="password" id="register-confirm-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Registrarse</button>
+            </form>
+            <div class="auth-switch">
+                ¿Ya tienes una cuenta? <a id="show-login">Inicia sesión aquí</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal (oculta inicialmente) -->
+    <div id="app-content" style="display: none;">
+        <button class="btn btn-chat-toggle" id="chat-toggle">Ver solo chat</button>
+        
+        <div class="app-container" id="app-container">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="card">
+                    <div class="user-profile" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <div class="user-avatar" id="user-avatar" style="width: 50px; height: 50px; cursor: pointer;" title="Cambiar foto de perfil"></div>
+                        <div>
+                            <div style="font-weight: bold;" id="user-name-display">Mi Perfil</div>
+                            <div class="post-meta">@<span id="username-display">Usuario</span></div>
+                            <button class="btn btn-secondary btn-sm" id="change-username-btn" style="margin-top: 5px;">
+                                Cambiar nombre
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <h3>Grupos Privados</h3>
+                    
+                    <div class="tabs">
+                        <div class="tab active" data-tab="my-groups">Mis Grupos</div>
+                        <div class="tab" data-tab="discover">Descubrir</div>
+                    </div>
+                    
+                    <div id="groups-list">
+                        <!-- Grupos se cargarán aquí dinámicamente -->
+                    </div>
+                    
+                    <button class="btn btn-success btn-sm" id="create-group-btn" style="width: 100%; margin-top: 15px;">
+                        + Crear Grupo
+                    </button>
+                </div>
+                
+                <div class="card" id="create-group-form" style="display: none;">
+                    <h4>Crear Nuevo Grupo</h4>
+                    <form id="group-form">
+                        <div class="form-group">
+                            <input type="text" id="group-name" placeholder="Nombre del grupo" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="group-description" placeholder="Descripción (opcional)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="group-privacy">Privacidad</label>
+                            <select id="group-privacy">
+                                <option value="private">Privado (solo por invitación)</option>
+                                <option value="public">Público (cualquiera puede unirse)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="group-avatar">Foto del grupo (opcional)</label>
+                            <input type="file" id="group-avatar" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="group-members">Invitar miembros</label>
+                            <select id="group-members" multiple style="height: auto;">
+                                <!-- Opciones se llenarán dinámicamente -->
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success">Crear Grupo</button>
+                        <button type="button" class="btn btn-secondary" id="cancel-group-btn">Cancelar</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Panel principal del foro -->
+            <div class="forum-panel">
+                <header class="card">
+                    <h1>COMUNIDAD</h1>
+                    <p>Descubre Grupos</p>
+                </header>
+
+                <!-- Formulario para nueva publicación -->
+                <div class="card">
+                    <h3>Nueva publicación</h3>
+                    <form id="post-form">
+                        <div class="form-group">
+                            <input type="text" id="post-title" placeholder="Título de tu publicación" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="post-content" placeholder="Describe lo que quieres compartir..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="post-image">Imagen (opcional)</label>
+                            <input type="file" id="post-image" accept="image/*">
+                        </div>
+                        <div class="form-group">
+                            <label for="post-file">Adjuntar archivo (opcional)</label>
+                            <input type="file" id="post-file">
+                        </div>
+                        <button type="submit" class="btn">Publicar</button>
+                    </form>
+                </div>
+
+                <!-- Listado de publicaciones -->
+                <div id="posts-container">
+                    <!-- Las publicaciones se generarán dinámicamente con JavaScript -->
+                </div>
+            </div>
+
+            <!-- Panel del chat -->
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <h3 id="chat-title">Chat en vivo</h3>
+                    <p class="post-meta">Conectados: <span id="online-count">1</span></p>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Los mensajes del chat aparecerán aquí -->
+                    <div class="message system">
+                        <div class="message-text">Bienvenido al chat de NeoForo</div>
+                        <div class="message-time">Ahora mismo</div>
+                    </div>
+                </div>
+
+                <div class="chat-input">
+                    <form class="chat-form" id="chat-form">
+                        <input type="text" id="chat-input" placeholder="Escribe un mensaje..." required>
+                        <button type="submit" class="btn">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para cambiar avatar -->
+        <div class="modal" id="avatar-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Cambiar foto de perfil</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="avatar-upload">
+                    <div class="avatar-preview" id="avatar-preview"></div>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                    <button class="btn btn-secondary" id="select-avatar-btn">Seleccionar imagen</button>
+                    <button class="btn btn-success" id="save-avatar-btn" style="margin-top: 10px;">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para cambiar nombre de usuario -->
+        <div class="modal" id="username-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Cambiar nombre de usuario</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label for="new-username">Nuevo nombre de usuario</label>
+                    <input type="text" id="new-username" placeholder="Ingresa tu nuevo nombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-display-name">Nombre para mostrar (opcional)</label>
+                    <input type="text" id="new-display-name" placeholder="Cómo quieres que te vean los demás">
+                </div>
+                <button class="btn btn-success" id="save-username-btn">Guardar cambios</button>
+            </div>
+        </div>
+
+        <!-- Modal para invitación a grupo -->
+        <div class="modal" id="invite-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="invite-modal-title">Invitar al grupo</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="invite-link-container">
+                    <p>Comparte este enlace para invitar a otros al grupo:</p>
+                    <div class="invite-link" id="invite-link-text">Cargando...</div>
+                    <button class="btn btn-sm copy-btn" id="copy-invite-btn">Copiar</button>
+                </div>
+                <div style="margin-top: 20px;">
+                    <p>O invita miembros directamente:</p>
+                    <select id="invite-members-select" multiple style="width: 100%; margin-bottom: 10px;"></select>
+                    <button class="btn btn-success" id="send-invites-btn">Enviar invitaciones</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1pkmZ1hYPawFZ1dcHY1P58fJbDsdnfTQ",
+            authDomain: "paginasocial-4e229.firebaseapp.com",
+            projectId: "paginasocial-4e229",
+            storageBucket: "paginasocial-4e229.appspot.com",
+            messagingSenderId: "368738278401",
+            appId: "1:368738278401:web:53230819db439ab4257400",
+            measurementId: "G-KDDDKD9XS7"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Configurar reglas de seguridad (simuladas en el cliente)
+        db.settings({
+            merge: true,
+            ignoreUndefinedProperties: true
+        });
+
+        // Referencias a colecciones de Firestore
+        const usersRef = db.collection("users");
+        const postsRef = db.collection("posts");
+        const groupsRef = db.collection("groups");
+        const messagesRef = db.collection("messages");
+        const commentsRef = db.collection("comments");
+
+        // Datos de la aplicación
+        let currentUser = null;
+        let users = [];
+        let posts = [];
+        let groups = [];
+        let chatMessages = [];
+
+        // Estado de la aplicación
+        let state = {
+            currentGroup: null,
+            chatFullscreen: false,
+            activeTab: 'my-groups',
+            tempAvatar: null,
+            currentInviteGroup: null
+        };
+
+        // DOM Elements
+        const loginPage = document.getElementById('login-page');
+        const registerPage = document.getElementById('register-page');
+        const appContent = document.getElementById('app-content');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegister = document.getElementById('show-register');
+        const showLogin = document.getElementById('show-login');
+        const postsContainer = document.getElementById('posts-container');
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        const chatTitle = document.getElementById('chat-title');
+        const postForm = document.getElementById('post-form');
+        const chatForm = document.getElementById('chat-form');
+        const onlineCount = document.getElementById('online-count');
+        const chatToggle = document.getElementById('chat-toggle');
+        const appContainer = document.getElementById('app-container');
+        const groupsList = document.getElementById('groups-list');
+        const createGroupForm = document.getElementById('create-group-form');
+        const createGroupBtn = document.getElementById('create-group-btn');
+        const cancelGroupBtn = document.getElementById('cancel-group-btn');
+        const groupForm = document.getElementById('group-form');
+        const groupMembersSelect = document.getElementById('group-members');
+        const tabs = document.querySelectorAll('.tab');
+        const userAvatar = document.getElementById('user-avatar');
+        const usernameDisplay = document.getElementById('username-display');
+        const userNameDisplay = document.getElementById('user-name-display');
+        const changeUsernameBtn = document.getElementById('change-username-btn');
+        const avatarModal = document.getElementById('avatar-modal');
+        const usernameModal = document.getElementById('username-modal');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        const avatarPreview = document.getElementById('avatar-preview');
+        const avatarInput = document.getElementById('avatar-input');
+        const selectAvatarBtn = document.getElementById('select-avatar-btn');
+        const saveAvatarBtn = document.getElementById('save-avatar-btn');
+        const newUsernameInput = document.getElementById('new-username');
+        const newDisplayNameInput = document.getElementById('new-display-name');
+        const saveUsernameBtn = document.getElementById('save-username-btn');
+        const inviteModal = document.getElementById('invite-modal');
+        const inviteLinkText = document.getElementById('invite-link-text');
+        const copyInviteBtn = document.getElementById('copy-invite-btn');
+        const inviteMembersSelect = document.getElementById('invite-members-select');
+        const sendInvitesBtn = document.getElementById('send-invites-btn');
+        const inviteModalTitle = document.getElementById('invite-modal-title');
+
+        // Funciones auxiliares
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+
+        function formatTime(dateString) {
+            return new Date(dateString).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getUserById(id) {
+            return users.find(user => user.id === id) || { name: "Usuario", displayName: "Usuario", avatar: "??", avatarUrl: null };
+        }
+
+        function getGroupById(id) {
+            return groups.find(group => group.id === id);
+        }
+
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function updateAvatarDisplay(element, user) {
+            if (user.avatarUrl) {
+                element.style.backgroundImage = `url(${user.avatarUrl})`;
+                element.textContent = '';
+            } else {
+                element.style.backgroundImage = '';
+                element.textContent = user.avatar;
+            }
+        }
+
+        function updateUserDisplay() {
+            usernameDisplay.textContent = currentUser.name;
+            userNameDisplay.textContent = currentUser.displayName || currentUser.name;
+            updateAvatarDisplay(userAvatar, currentUser);
+        }
+
+        // Renderizar publicaciones
+        function renderPosts() {
+            postsContainer.innerHTML = '';
+            
+            posts.forEach(post => {
+                const user = getUserById(post.userId);
+                
+                const postElement = document.createElement('div');
+                postElement.className = 'card post';
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-user">
+                            <div class="user-avatar" style="background-image: ${user.avatarUrl ? `url(${user.avatarUrl})` : 'none'};">
+                                ${user.avatarUrl ? '' : user.avatar}
+                            </div>
+                            <div>
+                                <div>${user.displayName || user.name}</div>
+                                <div class="post-meta">${formatDate(post.date)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3>${post.title}</h3>
+                    <div class="post-content">${post.content}</div>
+                    
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px;">` : ''}
+                    
+                    ${post.fileUrl ? `<a href="${post.fileUrl}" class="btn btn-secondary" style="margin-bottom: 15px;" download>Descargar archivo adjunto</a>` : ''}
+                    
+                    <div class="post-actions">
+                        <button class="action-btn">
+                            <span>👍</span> <span>12</span>
+                        </button>
+                        <button class="action-btn">
+                            <span>💬</span> <span>${post.comments ? post.comments.length : 0}</span>
+                        </button>
+                        <button class="action-btn">
+                            <span>🔗</span> <span>Compartir</span>
+                        </button>
+                    </div>
+                    
+                    <div class="comments-section">
+                        <h4>Comentarios</h4>
+                        ${post.comments ? post.comments.map(comment => {
+                            const commentUser = getUserById(comment.userId);
+                            return `
+                                <div class="comment">
+                                    <div class="post-user" style="margin-bottom: 5px;">
+                                        <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${commentUser.avatarUrl ? `url(${commentUser.avatarUrl})` : 'none'};">
+                                            ${commentUser.avatarUrl ? '' : commentUser.avatar}
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 0.9rem;">${commentUser.displayName || commentUser.name}</div>
+                                            <div class="post-meta" style="font-size: 0.7rem;">${formatDate(comment.date)}</div>
+                                        </div>
+                                    </div>
+                                    <div>${comment.text}</div>
+                                </div>
+                            `;
+                        }).join('') : ''}
+                        
+                        <form class="comment-form" style="margin-top: 15px;">
+                            <input type="hidden" name="postId" value="${post.id}">
+                            <input type="text" placeholder="Añade un comentario..." required>
+                            <button type="submit" class="btn" style="margin-top: 10px; padding: 8px 15px; font-size: 0.8rem;">Comentar</button>
+                        </form>
+                    </div>
+                `;
+                
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Renderizar mensajes del chat
+        function renderChatMessages() {
+            chatMessagesContainer.innerHTML = '';
+            
+            if (state.currentGroup) {
+                // Mostrar mensajes del grupo seleccionado
+                const group = getGroupById(state.currentGroup);
+                
+                // Mensaje de inicio del grupo
+                const welcomeMsg = document.createElement('div');
+                welcomeMsg.className = 'message system';
+                welcomeMsg.innerHTML = `
+                    <div class="message-text">Has entrado al grupo <strong>${group.name}</strong></div>
+                    <div class="message-time">Ahora mismo</div>
+                `;
+                chatMessagesContainer.appendChild(welcomeMsg);
+                
+                // Mostrar mensajes del grupo
+                if (group.messages) {
+                    group.messages.forEach(msg => {
+                        const user = getUserById(msg.userId);
+                        const isCurrentUser = msg.userId === currentUser.id;
+                        
+                        const messageElement = document.createElement('div');
+                        messageElement.className = `message ${isCurrentUser ? 'user' : 'other'}`;
+                        messageElement.innerHTML = `
+                            <div class="message-user-avatar" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${user.avatarUrl ? `url(${user.avatarUrl})` : 'none'};">
+                                    ${user.avatarUrl ? '' : user.avatar}
+                                </div>
+                                <div class="message-user">${user.displayName || user.name}</div>
+                            </div>
+                            <div class="message-text">${msg.text}</div>
+                            <div class="message-time">${formatTime(msg.time)}</div>
+                        `;
+                        
+                        chatMessagesContainer.appendChild(messageElement);
+                    });
+                }
+            } else {
+                // Mostrar chat global
+                chatMessages.forEach(msg => {
+                    const user = getUserById(msg.userId);
+                    const isCurrentUser = msg.userId === currentUser.id;
+                    
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `message ${isCurrentUser ? 'user' : 'other'}`;
+                    messageElement.innerHTML = `
+                        <div class="message-user-avatar" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                            <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${user.avatarUrl ? `url(${user.avatarUrl})` : 'none'};">
+                                ${user.avatarUrl ? '' : user.avatar}
+                            </div>
+                            <div class="message-user">${user.displayName || user.name}</div>
+                        </div>
+                        <div class="message-text">${msg.text}</div>
+                        <div class="message-time">${formatTime(msg.time)}</div>
+                    `;
+                    
+                    chatMessagesContainer.appendChild(messageElement);
+                });
+            }
+            
+            // Auto-scroll al final
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+
+        // Renderizar lista de grupos
+        function renderGroups() {
+            groupsList.innerHTML = '';
+            
+            const filteredGroups = state.activeTab === 'my-groups' 
+                ? groups.filter(group => group.members.includes(currentUser.id))
+                : groups.filter(group => group.privacy === 'public' && !group.members.includes(currentUser.id));
+            
+            if (filteredGroups.length === 0) {
+                groupsList.innerHTML = `
+                    <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                        ${state.activeTab === 'my-groups' 
+                            ? 'No estás en ningún grupo. Crea uno o únete a grupos públicos.' 
+                            : 'No hay grupos públicos disponibles en este momento.'}
+                    </div>
+                `;
+                return;
+            }
+            
+            filteredGroups.forEach(group => {
+                const lastMessageUser = group.lastMessage ? getUserById(group.lastMessage.userId) : null;
+                const isMember = group.members.includes(currentUser.id);
+                const isCreator = group.creatorId === currentUser.id;
+                
+                const groupElement = document.createElement('div');
+                groupElement.className = `group-card ${state.currentGroup === group.id ? 'active' : ''} ${!isMember ? 'not-member' : ''}`;
+                groupElement.dataset.groupId = group.id;
+                groupElement.innerHTML = `
+                    <div class="group-card-header">
+                        <div class="group-avatar" style="background-image: ${group.avatarUrl ? `url(${group.avatarUrl})` : 'none'};">
+                            ${group.avatarUrl ? '' : group.name.charAt(0)}
+                        </div>
+                        <div class="group-name">${group.name}</div>
+                        ${group.unread > 0 ? `<span class="badge badge-primary">${group.unread}</span>` : ''}
+                    </div>
+                    ${group.lastMessage ? `
+                        <div class="group-last-message">
+                            ${lastMessageUser ? `${lastMessageUser.displayName || lastMessageUser.name}: ` : ''}${group.lastMessage.text}
+                        </div>
+                    ` : ''}
+                    <div class="group-members">
+                        ${group.members.slice(0, 5).map(memberId => {
+                            const member = getUserById(memberId);
+                            return `<div class="member-avatar" title="${member.displayName || member.name}" style="background-image: ${member.avatarUrl ? `url(${member.avatarUrl})` : 'none'};">
+                                ${member.avatarUrl ? '' : member.avatar}
+                            </div>`;
+                        }).join('')}
+                        ${group.members.length > 5 ? `<div class="member-avatar">+${group.members.length - 5}</div>` : ''}
+                    </div>
+                    ${!isMember ? `
+                        <button class="btn btn-success btn-sm join-group-btn" style="width: 100%; margin-top: 10px;">
+                            Unirse al Grupo
+                        </button>
+                    ` : ''}
+                    ${isMember && isCreator ? `
+                        <button class="btn btn-primary btn-sm invite-group-btn" style="width: 100%; margin-top: 10px;">
+                            Invitar miembros
+                        </button>
+                    ` : ''}
+                `;
+                
+                groupsList.appendChild(groupElement);
+            });
+            
+            // Actualizar título del chat
+            if (state.currentGroup) {
+                const group = getGroupById(state.currentGroup);
+                chatTitle.textContent = group.name;
+            } else {
+                chatTitle.textContent = 'Chat en vivo';
+            }
+        }
+
+        // Renderizar opciones de miembros para el formulario de grupo
+        function renderMemberOptions() {
+            groupMembersSelect.innerHTML = '';
+            inviteMembersSelect.innerHTML = '';
+            
+            users.forEach(user => {
+                if (user.id !== currentUser.id) { // No incluir al usuario actual
+                    // Para el formulario de creación de grupo
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.displayName || user.name} (${user.avatar})`;
+                    groupMembersSelect.appendChild(option);
+                    
+                    // Para el modal de invitación
+                    const inviteOption = document.createElement('option');
+                    inviteOption.value = user.id;
+                    inviteOption.textContent = `${user.displayName || user.name} (${user.avatar})`;
+                    inviteMembersSelect.appendChild(inviteOption);
+                }
+            });
+        }
+
+        // Simular usuarios conectados (aleatorio entre 1 y 50)
+        function updateOnlineUsers() {
+            onlineCount.textContent = Math.floor(Math.random() * 50) + 1;
+            setTimeout(updateOnlineUsers, 5000); // Actualizar cada 5 segundos
+        }
+
+        // Alternar modo pantalla completa del chat
+        function toggleChatFullscreen() {
+            state.chatFullscreen = !state.chatFullscreen;
+            if (state.chatFullscreen) {
+                appContainer.classList.add('chat-fullscreen');
+                chatToggle.textContent = 'Mostrar foro';
+            } else {
+                appContainer.classList.remove('chat-fullscreen');
+                chatToggle.textContent = 'Ver solo chat';
+            }
+        }
+
+        // Mostrar modal de invitación
+        function showInviteModal(groupId) {
+            const group = getGroupById(groupId);
+            if (!group) return;
+            
+            state.currentInviteGroup = groupId;
+            inviteModalTitle.textContent = `Invitar a ${group.name}`;
+            
+            // Generar link de invitación
+            const inviteLink = `${window.location.origin}?join_group=${group.id}&code=${group.inviteCode}`;
+            inviteLinkText.textContent = inviteLink;
+            
+            // Mostrar modal
+            inviteModal.style.display = 'flex';
+        }
+
+        // Subir archivo a Firebase Storage
+        async function uploadFile(file, path) {
+            try {
+                const storageRef = storage.ref();
+                const fileRef = storageRef.child(`${path}/${Date.now()}_${file.name}`);
+                const uploadTask = await fileRef.put(file);
+                return await uploadTask.ref.getDownloadURL();
+            } catch (error) {
+                console.error("Error al subir archivo:", error);
+                throw new Error("No se pudo subir el archivo. Por favor intenta nuevamente.");
+            }
+        }
+
+        // Cargar datos iniciales de Firestore
+        async function loadInitialData() {
+            try {
+                // Verificar conexión a Internet
+                if (!navigator.onLine) {
+                    throw new Error("No hay conexión a Internet");
+                }
+
+                // Verificar autenticación
+                if (!auth.currentUser) {
+                    throw new Error("Usuario no autenticado");
+                }
+
+                console.log("Cargando datos iniciales...");
+
+                // Cargar usuarios con reintentos
+                let usersSnapshot;
+                try {
+                    usersSnapshot = await usersRef.get();
+                } catch (error) {
+                    console.error("Error al cargar usuarios, reintentando...", error);
+                    usersSnapshot = await usersRef.get();
+                }
+                
+                if (usersSnapshot.empty) {
+                    console.warn("No se encontraron usuarios en la base de datos");
+                }
+                users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`${users.length} usuarios cargados`);
+
+                // Cargar publicaciones con reintentos
+                let postsSnapshot;
+                try {
+                    postsSnapshot = await postsRef.orderBy('date', 'desc').limit(50).get();
+                } catch (error) {
+                    console.error("Error al cargar publicaciones, reintentando...", error);
+                    postsSnapshot = await postsRef.orderBy('date', 'desc').limit(50).get();
+                }
+                posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`${posts.length} publicaciones cargadas`);
+
+                // Cargar grupos con reintentos
+                let groupsSnapshot;
+                try {
+                    groupsSnapshot = await groupsRef.get();
+                } catch (error) {
+                    console.error("Error al cargar grupos, reintentando...", error);
+                    groupsSnapshot = await groupsRef.get();
+                }
+                groups = groupsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`${groups.length} grupos cargados`);
+
+                // Cargar mensajes globales con reintentos
+                let messagesSnapshot;
+                try {
+                    messagesSnapshot = await messagesRef.orderBy('time').limit(100).get();
+                } catch (error) {
+                    console.error("Error al cargar mensajes globales, reintentando...", error);
+                    messagesSnapshot = await messagesRef.orderBy('time').limit(100).get();
+                }
+                chatMessages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`${chatMessages.length} mensajes globales cargados`);
+
+                // Cargar mensajes de grupos con manejo de errores individual
+                for (const group of groups) {
+                    try {
+                        const groupMessagesSnapshot = await db.collection(`groups/${group.id}/messages`)
+                            .orderBy('time')
+                            .limit(100)
+                            .get();
+                        
+                        group.messages = groupMessagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        
+                        if (group.messages.length > 0) {
+                            group.lastMessage = group.messages[group.messages.length - 1];
+                        }
+                    } catch (error) {
+                        console.error(`Error cargando mensajes del grupo ${group.id}:`, error);
+                        group.messages = [];
+                    }
+                }
+
+                // Renderizar la aplicación
+                updateUserDisplay();
+                renderPosts();
+                renderGroups();
+                renderChatMessages();
+                updateOnlineUsers();
+
+                console.log("Datos cargados exitosamente");
+
+            } catch (error) {
+                console.error("Error detallado al cargar datos:", error);
+                
+                // Mostrar mensaje de error específico
+                let errorMessage = "Error al cargar los datos. ";
+                
+                if (error.message.includes("permission") || error.message.includes("Missing or insufficient permissions")) {
+                    errorMessage += "No tienes permisos para acceder a estos datos. ";
+                } else if (error.message.includes("offline") || error.message.includes("network")) {
+                    errorMessage += "No hay conexión a Internet. ";
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                errorMessage += " Por favor recarga la página o intenta más tarde.";
+                
+                // Mostrar notificación más amigable
+                const errorElement = document.createElement('div');
+                errorElement.className = 'card';
+                errorElement.style.backgroundColor = 'rgba(237, 85, 101, 0.2)';
+                errorElement.style.borderLeft = '3px solid var(--danger)';
+                errorElement.innerHTML = `
+                    <h3 style="color: var(--danger);">Error al cargar datos</h3>
+                    <p>${errorMessage}</p>
+                    <button class="btn btn-sm" onclick="window.location.reload()">Recargar página</button>
+                `;
+                
+                // Insertar al principio del panel del foro
+                const forumPanel = document.querySelector('.forum-panel');
+                if (forumPanel) {
+                    forumPanel.insertBefore(errorElement, forumPanel.firstChild);
+                }
+            }
+        }
+
+        // Event Listeners
+        postForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            const imageInput = document.getElementById('post-image');
+            const fileInput = document.getElementById('post-file');
+            
+            try {
+                let imageUrl = null;
+                let fileUrl = null;
+                
+                // Subir imagen si existe
+                if (imageInput.files[0]) {
+                    imageUrl = await uploadFile(imageInput.files[0], 'post_images');
+                }
+                
+                // Subir archivo si existe
+                if (fileInput.files[0]) {
+                    fileUrl = await uploadFile(fileInput.files[0], 'post_files');
+                }
+                
+                // Crear nueva publicación en Firestore
+                const newPost = {
+                    userId: currentUser.id,
+                    title: title,
+                    content: content,
+                    imageUrl: imageUrl,
+                    fileUrl: fileUrl,
+                    date: new Date().toISOString(),
+                    comments: []
+                };
+                
+                const docRef = await postsRef.add(newPost);
+                newPost.id = docRef.id;
+                posts.unshift(newPost); // Añadir al principio del array
+                
+                renderPosts();
+                postForm.reset();
+                
+                // Mostrar notificación
+                alert('¡Publicación creada con éxito!');
+                
+            } catch (error) {
+                console.error("Error al crear publicación:", error);
+                alert("Error al crear la publicación: " + error.message);
+            }
+        });
+
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('chat-input');
+            const messageText = input.value.trim();
+            
+            if (messageText) {
+                try {
+                    // Crear nuevo mensaje
+                    const newMessage = {
+                        userId: currentUser.id,
+                        text: messageText,
+                        time: new Date().toISOString()
+                    };
+                    
+                    if (state.currentGroup) {
+                        // Enviar mensaje al grupo
+                        const group = getGroupById(state.currentGroup);
+                        
+                        // Guardar en Firestore
+                        const docRef = await db.collection(`groups/${state.currentGroup}/messages`).add(newMessage);
+                        newMessage.id = docRef.id;
+                        
+                        if (!group.messages) group.messages = [];
+                        group.messages.push(newMessage);
+                        group.lastMessage = newMessage;
+                        
+                        // Actualizar último mensaje en el grupo
+                        await groupsRef.doc(state.currentGroup).update({
+                            lastMessage: newMessage
+                        });
+                        
+                    } else {
+                        // Enviar mensaje al chat global
+                        const docRef = await messagesRef.add(newMessage);
+                        newMessage.id = docRef.id;
+                        chatMessages.push(newMessage);
+                    }
+                    
+                    renderChatMessages();
+                    input.value = '';
+                    
+                } catch (error) {
+                    console.error("Error al enviar mensaje:", error);
+                    alert("Error al enviar el mensaje: " + error.message);
+                }
+            }
+        });
+
+        // Seleccionar grupo
+        groupsList.addEventListener('click', async function(e) {
+            const groupCard = e.target.closest('.group-card');
+            const inviteBtn = e.target.closest('.invite-group-btn');
+            
+            if (inviteBtn) {
+                const groupCard = inviteBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                showInviteModal(groupId);
+                return;
+            }
+            
+            if (groupCard) {
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                // Verificar si el usuario es miembro
+                if (!group.members.includes(currentUser.id)) {
+                    return; // No hacer nada si no es miembro
+                }
+                
+                // Marcar como leído
+                group.unread = 0;
+                
+                // Establecer grupo actual
+                state.currentGroup = groupId;
+                
+                // Renderizar mensajes del grupo
+                renderChatMessages();
+                renderGroups();
+            }
+            
+            // Unirse a grupo público
+            const joinBtn = e.target.closest('.join-group-btn');
+            if (joinBtn) {
+                const groupCard = joinBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                if (group.privacy === 'public') {
+                    try {
+                        // Actualizar en Firestore
+                        await groupsRef.doc(groupId).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
+                        });
+                        
+                        // Actualizar localmente
+                        group.members.push(currentUser.id);
+                        renderGroups();
+                        alert(`Te has unido al grupo ${group.name}`);
+                        
+                    } catch (error) {
+                        console.error("Error al unirse al grupo:", error);
+                        alert("Error al unirse al grupo: " + error.message);
+                    }
+                }
+            }
+        });
+
+        // Mostrar/ocultar formulario de creación de grupo
+        createGroupBtn.addEventListener('click', function() {
+            createGroupForm.style.display = 'block';
+            renderMemberOptions();
+        });
+
+        cancelGroupBtn.addEventListener('click', function() {
+            createGroupForm.style.display = 'none';
+            groupForm.reset();
+        });
+
+        // Crear nuevo grupo
+        groupForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('group-name').value;
+            const description = document.getElementById('group-description').value;
+            const privacy = document.getElementById('group-privacy').value;
+            const avatarInput = document.getElementById('group-avatar');
+            const selectedMembers = Array.from(document.getElementById('group-members').selectedOptions)
+                .map(option => option.value);
+            
+            try {
+                let avatarUrl = null;
+                
+                // Subir avatar si existe
+                if (avatarInput.files[0]) {
+                    avatarUrl = await uploadFile(avatarInput.files[0], 'group_avatars');
+                }
+                
+                // Crear nuevo grupo en Firestore
+                const newGroup = {
+                    name: name,
+                    description: description,
+                    creatorId: currentUser.id,
+                    privacy: privacy,
+                    members: [currentUser.id, ...selectedMembers],
+                    lastMessage: null,
+                    unread: 0,
+                    avatarUrl: avatarUrl,
+                    inviteCode: generateRandomString(10)
+                };
+                
+                const docRef = await groupsRef.add(newGroup);
+                newGroup.id = docRef.id;
+                newGroup.messages = [];
+                
+                groups.unshift(newGroup);
+                
+                // Reset form
+                groupForm.reset();
+                createGroupForm.style.display = 'none';
+                
+                // Mostrar notificación
+                alert(`¡Grupo "${name}" creado con éxito!`);
+                
+                // Renderizar grupos
+                renderGroups();
+                
+            } catch (error) {
+                console.error("Error al crear grupo:", error);
+                alert("Error al crear el grupo: " + error.message);
+            }
+        });
+
+        // Cambiar pestañas
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                state.activeTab = this.dataset.tab;
+                renderGroups();
+            });
+        });
+
+        // Cambiar avatar de usuario
+        userAvatar.addEventListener('click', function() {
+            avatarModal.style.display = 'flex';
+            updateAvatarDisplay(avatarPreview, currentUser);
+        });
+
+        // Cambiar nombre de usuario
+        changeUsernameBtn.addEventListener('click', function() {
+            usernameModal.style.display = 'flex';
+            newUsernameInput.value = currentUser.name;
+            newDisplayNameInput.value = currentUser.displayName || '';
+        });
+
+        // Guardar nuevo nombre de usuario
+        saveUsernameBtn.addEventListener('click', async function() {
+            const newUsername = newUsernameInput.value.trim();
+            const newDisplayName = newDisplayNameInput.value.trim();
+            
+            if (!newUsername) {
+                alert('El nombre de usuario no puede estar vacío');
+                return;
+            }
+            
+            try {
+                // Verificar si el nombre de usuario ya existe
+                const usernameExists = users.some(user => 
+                    user.id !== currentUser.id && user.name.toLowerCase() === newUsername.toLowerCase());
+                
+                if (usernameExists) {
+                    alert('Este nombre de usuario ya está en uso. Por favor elige otro.');
+                    return;
+                }
+                
+                // Actualizar en Firestore
+                await usersRef.doc(currentUser.id).update({
+                    name: newUsername,
+                    displayName: newDisplayName || firebase.firestore.FieldValue.delete()
+                });
+                
+                // Actualizar datos del usuario localmente
+                currentUser.name = newUsername;
+                if (newDisplayName) {
+                    currentUser.displayName = newDisplayName;
+                } else {
+                    delete currentUser.displayName;
+                }
+                
+                // Actualizar la visualización
+                updateUserDisplay();
+                renderPosts();
+                renderGroups();
+                renderChatMessages();
+                
+                // Cerrar modal
+                usernameModal.style.display = 'none';
+                
+                // Mostrar notificación
+                alert('¡Nombre de usuario actualizado con éxito!');
+                
+            } catch (error) {
+                console.error("Error al actualizar nombre de usuario:", error);
+                alert("Error al actualizar el nombre de usuario: " + error.message);
+            }
+        });
+
+        // Cerrar modales
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                avatarModal.style.display = 'none';
+                usernameModal.style.display = 'none';
+                inviteModal.style.display = 'none';
+                state.tempAvatar = null;
+            });
+        });
+
+        // Seleccionar imagen para avatar
+        selectAvatarBtn.addEventListener('click', function() {
+            avatarInput.click();
+        });
+
+        avatarInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    state.tempAvatar = event.target.result;
+                    avatarPreview.style.backgroundImage = `url(${state.tempAvatar})`;
+                    avatarPreview.textContent = '';
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Guardar nuevo avatar
+        saveAvatarBtn.addEventListener('click', async function() {
+            if (state.tempAvatar) {
+                try {
+                    // Subir la imagen a Firebase Storage
+                    const file = avatarInput.files[0];
+                    const avatarUrl = await uploadFile(file, 'user_avatars');
+                    
+                    // Actualizar en Firestore
+                    await usersRef.doc(currentUser.id).update({
+                        avatarUrl: avatarUrl
+                    });
+                    
+                    // Actualizar localmente
+                    currentUser.avatarUrl = avatarUrl;
+                    updateAvatarDisplay(userAvatar, currentUser);
+                    
+                    // Cerrar modal y resetear
+                    avatarModal.style.display = 'none';
+                    state.tempAvatar = null;
+                    avatarInput.value = '';
+                    
+                    // Actualizar las vistas
+                    renderPosts();
+                    renderGroups();
+                    renderChatMessages();
+                    
+                    // Mostrar notificación
+                    alert('¡Foto de perfil actualizada con éxito!');
+                    
+                } catch (error) {
+                    console.error("Error al actualizar avatar:", error);
+                    alert("Error al actualizar la foto de perfil: " + error.message);
+                }
+            }
+        });
+
+        // Copiar link de invitación
+        copyInviteBtn.addEventListener('click', function() {
+            navigator.clipboard.writeText(inviteLinkText.textContent)
+                .then(() => {
+                    copyInviteBtn.textContent = '¡Copiado!';
+                    setTimeout(() => {
+                        copyInviteBtn.textContent = 'Copiar';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Error al copiar:", err);
+                    alert("No se pudo copiar el enlace. Por favor cópialo manualmente.");
+                });
+        });
+
+        // Enviar invitaciones directas
+        sendInvitesBtn.addEventListener('click', async function() {
+            const selectedMembers = Array.from(inviteMembersSelect.selectedOptions)
+                .map(option => option.value);
+            
+            if (selectedMembers.length > 0) {
+                try {
+                    // Aquí podrías implementar el envío de notificaciones a los usuarios
+                    // Por ahora solo mostramos un mensaje
+                    alert(`Invitaciones enviadas a ${selectedMembers.length} miembros`);
+                    inviteModal.style.display = 'none';
+                    
+                } catch (error) {
+                    console.error("Error al enviar invitaciones:", error);
+                    alert("Error al enviar las invitaciones: " + error.message);
+                }
+            } else {
+                alert('Por favor selecciona al menos un miembro para invitar');
+            }
+        });
+
+        chatToggle.addEventListener('click', toggleChatFullscreen);
+
+        // Alternar entre login y registro
+        showRegister.addEventListener('click', function() {
+            loginPage.style.display = 'none';
+            registerPage.style.display = 'flex';
+        });
+
+        showLogin.addEventListener('click', function() {
+            registerPage.style.display = 'none';
+            loginPage.style.display = 'flex';
+        });
+
+        // Login con email y contraseña
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const userDoc = await usersRef.doc(userCredential.user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // Crear documento de usuario si no existe
+                    const emailName = email.split('@')[0];
+                    await usersRef.doc(userCredential.user.uid).set({
+                        name: emailName.toLowerCase().replace(/\s+/g, ''),
+                        displayName: emailName,
+                        email: email,
+                        avatar: emailName.charAt(0).toUpperCase() + emailName.split(' ').slice(-1)[0].charAt(0).toUpperCase(),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Actualizar último login
+                    await usersRef.doc(userCredential.user.uid).update({
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                // Obtener datos del usuario
+                currentUser = {
+                    id: userCredential.user.uid,
+                    email: userCredential.user.email,
+                    ...(await usersRef.doc(userCredential.user.uid).get()).data()
+                };
+                
+                // Ocultar formularios de login/registro y mostrar la aplicación
+                loginPage.style.display = 'none';
+                registerPage.style.display = 'none';
+                appContent.style.display = 'block';
+                
+                // Cargar datos de la aplicación
+                await loadInitialData();
+                
+            } catch (error) {
+                console.error("Error al iniciar sesión:", error);
+                
+                let errorMessage = "Error al iniciar sesión. ";
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage += "No existe una cuenta con este correo.";
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage += "Contraseña incorrecta.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage += "Demasiados intentos fallidos. Por favor intenta más tarde.";
+                } else {
+                    errorMessage += "Verifica tus credenciales e intenta nuevamente.";
+                }
+                
+                alert(errorMessage);
+            }
+        });
+
+        // Registro de nuevo usuario
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert("Las contraseñas no coinciden");
+                return;
+            }
+            
+            if (password.length < 6) {
+                alert("La contraseña debe tener al menos 6 caracteres");
+                return;
+            }
+            
+            try {
+                // Crear usuario en Firebase Auth
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                
+                // Crear documento de usuario en Firestore
+                const newUser = {
+                    name: name.toLowerCase().replace(/\s+/g, ''),
+                    displayName: name,
+                    email: email,
+                    avatar: name.charAt(0).toUpperCase() + name.split(' ').slice(-1)[0].charAt(0).toUpperCase(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await usersRef.doc(userCredential.user.uid).set(newUser);
+                
+                // Actualizar usuario actual
+                currentUser = {
+                    id: userCredential.user.uid,
+                    ...newUser
+                };
+                
+                // Ocultar formularios de login/registro y mostrar la aplicación
+                registerPage.style.display = 'none';
+                loginPage.style.display = 'none';
+                appContent.style.display = 'block';
+                
+                // Cargar datos de la aplicación
+                await loadInitialData();
+                
+            } catch (error) {
+                console.error("Error al registrar usuario:", error);
+                
+                let errorMessage = "Error al registrar el usuario. ";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage += "Este correo ya está registrado.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage += "El correo electrónico no es válido.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage += "La contraseña es demasiado débil.";
+                } else {
+                    errorMessage += "Por favor intenta nuevamente.";
+                }
+                
+                alert(errorMessage);
+            }
+        });
+
+        // Escuchar cambios en el estado de autenticación
+        auth.onAuthStateChanged(async (user) => {
+            try {
+                if (user) {
+                    console.log("Usuario autenticado detectado:", user.uid);
+                    
+                    // Verificar si el documento de usuario existe
+                    const userDoc = await usersRef.doc(user.uid).get();
+                    
+                    if (!userDoc.exists) {
+                        console.log("Documento de usuario no existe, creando...");
+                        
+                        // Datos básicos del usuario
+                        const emailName = user.email ? user.email.split('@')[0] : 'user';
+                        await usersRef.doc(user.uid).set({
+                            name: emailName.toLowerCase().replace(/\s+/g, ''),
+                            displayName: emailName,
+                            email: user.email,
+                            avatar: emailName.charAt(0).toUpperCase(),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        console.log("Documento de usuario creado exitosamente");
+                    } else {
+                        console.log("Documento de usuario encontrado");
+                        // Actualizar último login
+                        await usersRef.doc(user.uid).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    
+                    // Obtener datos del usuario
+                    currentUser = {
+                        id: user.uid,
+                        email: user.email,
+                        ...(await usersRef.doc(user.uid).get()).data()
+                    };
+                    
+                    // Cargar datos de la aplicación
+                    await loadInitialData();
+                    
+                    // Mostrar aplicación
+                    loginPage.style.display = 'none';
+                    registerPage.style.display = 'none';
+                    appContent.style.display = 'block';
+                    
+                } else {
+                    // Usuario no autenticado
+                    console.log("No hay usuario autenticado");
+                    currentUser = null;
+                    appContent.style.display = 'none';
+                    loginPage.style.display = 'flex';
+                }
+            } catch (error) {
+                console.error("Error en el cambio de estado de autenticación:", error);
+                
+                // Mostrar error al usuario
+                const errorMessage = error.message || "Error desconocido al configurar la sesión";
+                
+                // Crear elemento de error
+                const errorElement = document.createElement('div');
+                errorElement.className = 'card';
+                errorElement.style.backgroundColor = 'rgba(237, 85, 101, 0.2)';
+                errorElement.style.borderLeft = '3px solid var(--danger)';
+                errorElement.innerHTML = `
+                    <h3 style="color: var(--danger);">Error de autenticación</h3>
+                    <p>${errorMessage}</p>
+                    <button class="btn btn-sm" onclick="window.location.reload()">Recargar página</button>
+                `;
+                
+                // Insertar en el cuerpo del documento
+                document.body.insertBefore(errorElement, document.body.firstChild);
+                
+                // Forzar cierre de sesión en caso de error
+                try {
+                    await auth.signOut();
+                } catch (signOutError) {
+                    console.error("Error al cerrar sesión:", signOutError);
+                }
+            }
+        });
+
+        // Inicialización
+        function init() {
+            // Verificar si hay un parámetro de grupo en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const joinGroup = urlParams.get('join_group');
+            const inviteCode = urlParams.get('code');
+            
+            if (joinGroup && inviteCode) {
+                // Aquí podrías implementar la lógica para unirse a un grupo con código de invitación
+                // Por ahora solo mostramos un mensaje
+                alert(`Has sido invitado a unirte al grupo ${joinGroup} con código ${inviteCode}. Inicia sesión para continuar.`);
+                
+                // Limpiar la URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
