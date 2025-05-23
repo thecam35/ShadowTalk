@@ -883,7 +883,7 @@
             <!-- Panel principal del foro -->
             <div class="forum-panel">
                 <header class="card">
-                    <h1>COMUNIDAD</h1>
+                    <h1>COMUNIDAD SHADOW SIGMA</h1>
                     <p>Bienvenido a la comunidad</p>
                 </header>
 
@@ -2027,161 +2027,180 @@
         });
 
         // Seleccionar grupo o mensaje directo
-        groupsList.addEventListener('click', async function(e) {
-            const groupCard = e.target.closest('.group-card');
-            const inviteBtn = e.target.closest('.invite-group-btn');
-            const manageBtn = e.target.closest('.manage-group-btn');
-            const muteBtn = e.target.closest('.mute-group-btn');
-            const unmuteBtn = e.target.closest('.unmute-group-btn');
-            const removeMemberBtn = e.target.closest('.remove-member-btn');
-            
-            if (inviteBtn) {
-                const groupCard = inviteBtn.closest('.group-card');
-                const groupId = groupCard.dataset.groupId;
-                showInviteModal(groupId);
-                return;
+        // Reemplazar el event listener existente de groupsList con este:
+groupsList.addEventListener('click', async function(e) {
+    const groupCard = e.target.closest('.group-card');
+    const inviteBtn = e.target.closest('.invite-group-btn');
+    const manageBtn = e.target.closest('.manage-group-btn');
+    const muteBtn = e.target.closest('.mute-group-btn');
+    const unmuteBtn = e.target.closest('.unmute-group-btn');
+    const removeMemberBtn = e.target.closest('.remove-member-btn');
+    const joinBtn = e.target.closest('.join-group-btn');  // Nuevo selector específico para el botón de unirse
+    
+    // Manejar clic en el botón "Unirse al Grupo"
+    if (joinBtn) {
+        const groupCard = joinBtn.closest('.group-card');
+        const groupId = groupCard.dataset.groupId;
+        const group = getGroupById(groupId);
+        
+        if (group && group.privacy === 'public') {
+            try {
+                // Verificar si ya es miembro (por si acaso)
+                if (group.members.includes(currentUser.id)) {
+                    alert(`Ya eres miembro del grupo ${group.name}`);
+                    return;
+                }
+                
+                // Actualizar en Firestore
+                await groupsRef.doc(groupId).update({
+                    members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
+                });
+                
+                // Actualizar localmente
+                group.members.push(currentUser.id);
+                
+                // Mostrar feedback al usuario
+                alert(`¡Te has unido al grupo ${group.name}!`);
+                
+                // Actualizar la interfaz
+                renderGroups();
+                
+                // Cambiar a la pestaña "Mis Grupos" automáticamente
+                document.querySelector('.tab[data-tab="my-groups"]').click();
+                
+            } catch (error) {
+                console.error("Error al unirse al grupo:", error);
+                alert("Error al unirse al grupo: " + error.message);
             }
+        }
+        return;
+    }
+    
+    // Resto del código existente para otros botones...
+    if (inviteBtn) {
+        const groupCard = inviteBtn.closest('.group-card');
+        const groupId = groupCard.dataset.groupId;
+        showInviteModal(groupId);
+        return;
+    }
+    
+    if (manageBtn) {
+        const groupCard = manageBtn.closest('.group-card');
+        const groupId = groupCard.dataset.groupId;
+        showGroupManagementModal(groupId);
+        return;
+    }
+    
+    if (muteBtn) {
+        const groupCard = muteBtn.closest('.group-card');
+        const groupId = groupCard.dataset.groupId;
+        const group = getGroupById(groupId);
+        
+        try {
+            await groupsRef.doc(groupId).update({
+                mutedUntil: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 horas
+            });
             
-            if (manageBtn) {
-                const groupCard = manageBtn.closest('.group-card');
-                const groupId = groupCard.dataset.groupId;
-                showGroupManagementModal(groupId);
-                return;
-            }
+            group.mutedUntil = new Date(Date.now() + 8 * 60 * 60 * 1000);
+            renderGroups();
+            alert('Has silenciado las notificaciones de este grupo por 8 horas');
             
-            if (muteBtn) {
-                const groupCard = muteBtn.closest('.group-card');
-                const groupId = groupCard.dataset.groupId;
+        } catch (error) {
+            console.error("Error al silenciar grupo:", error);
+            alert("Error al silenciar el grupo: " + error.message);
+        }
+        return;
+    }
+    
+    if (unmuteBtn) {
+        const groupCard = unmuteBtn.closest('.group-card');
+        const groupId = groupCard.dataset.groupId;
+        const group = getGroupById(groupId);
+        
+        try {
+            await groupsRef.doc(groupId).update({
+                mutedUntil: null
+            });
+            
+            group.mutedUntil = null;
+            renderGroups();
+            alert('Has reactivado las notificaciones de este grupo');
+            
+        } catch (error) {
+            console.error("Error al reactivar notificaciones:", error);
+            alert("Error al reactivar las notificaciones: " + error.message);
+        }
+        return;
+    }
+    
+    if (removeMemberBtn) {
+        const memberId = removeMemberBtn.dataset.memberId;
+        const groupId = state.currentManagedGroup;
+        
+        if (confirm(`¿Estás seguro de que quieres eliminar a este miembro del grupo?`)) {
+            try {
+                await groupsRef.doc(groupId).update({
+                    members: firebase.firestore.FieldValue.arrayRemove(memberId)
+                });
+                
                 const group = getGroupById(groupId);
+                group.members = group.members.filter(id => id !== memberId);
                 
-                try {
-                    await groupsRef.doc(groupId).update({
-                        mutedUntil: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 horas
-                    });
-                    
-                    group.mutedUntil = new Date(Date.now() + 8 * 60 * 60 * 1000);
-                    renderGroups();
-                    alert('Has silenciado las notificaciones de este grupo por 8 horas');
-                    
-                } catch (error) {
-                    console.error("Error al silenciar grupo:", error);
-                    alert("Error al silenciar el grupo: " + error.message);
-                }
+                renderGroupMembersList(groupId);
+                renderGroups();
+                alert('Miembro eliminado del grupo');
+                
+            } catch (error) {
+                console.error("Error al eliminar miembro:", error);
+                alert("Error al eliminar miembro: " + error.message);
+            }
+        }
+        return;
+    }
+    
+    if (groupCard) {
+        const groupId = groupCard.dataset.groupId;
+        const dmId = groupCard.dataset.dmId;
+        
+        if (groupId) {
+            const group = getGroupById(groupId);
+            
+            if (!group.members.includes(currentUser.id)) {
                 return;
             }
             
-            if (unmuteBtn) {
-                const groupCard = unmuteBtn.closest('.group-card');
-                const groupId = groupCard.dataset.groupId;
-                const group = getGroupById(groupId);
-                
-                try {
-                    await groupsRef.doc(groupId).update({
-                        mutedUntil: null
-                    });
-                    
-                    group.mutedUntil = null;
-                    renderGroups();
-                    alert('Has reactivado las notificaciones de este grupo');
-                    
-                } catch (error) {
-                    console.error("Error al reactivar notificaciones:", error);
-                    alert("Error al reactivar las notificaciones: " + error.message);
-                }
-                return;
+            group.unread = 0;
+            state.currentGroup = groupId;
+            state.currentDirectMessage = null;
+            
+            renderChatMessages();
+            renderGroups();
+        } else if (dmId) {
+            const dm = directMessages.find(dm => dm.id === dmId);
+            
+            // Marcar mensajes como leídos
+            if (dm.messages) {
+                dm.messages.forEach(async msg => {
+                    if (msg.userId !== currentUser.id && !msg.read) {
+                        await directMessagesRef
+                            .doc(dmId)
+                            .collection('messages')
+                            .doc(msg.id)
+                            .update({ read: true });
+                        
+                        msg.read = true;
+                    }
+                });
             }
             
-            if (removeMemberBtn) {
-                const memberId = removeMemberBtn.dataset.memberId;
-                const groupId = state.currentManagedGroup;
-                
-                if (confirm(`¿Estás seguro de que quieres eliminar a este miembro del grupo?`)) {
-                    try {
-                        await groupsRef.doc(groupId).update({
-                            members: firebase.firestore.FieldValue.arrayRemove(memberId)
-                        });
-                        
-                        const group = getGroupById(groupId);
-                        group.members = group.members.filter(id => id !== memberId);
-                        
-                        renderGroupMembersList(groupId);
-                        renderGroups();
-                        alert('Miembro eliminado del grupo');
-                        
-                    } catch (error) {
-                        console.error("Error al eliminar miembro:", error);
-                        alert("Error al eliminar miembro: " + error.message);
-                    }
-                }
-                return;
-            }
+            state.currentDirectMessage = dmId;
+            state.currentGroup = null;
             
-            if (groupCard) {
-                const groupId = groupCard.dataset.groupId;
-                const dmId = groupCard.dataset.dmId;
-                
-                if (groupId) {
-                    const group = getGroupById(groupId);
-                    
-                    if (!group.members.includes(currentUser.id)) {
-                        return;
-                    }
-                    
-                    group.unread = 0;
-                    state.currentGroup = groupId;
-                    state.currentDirectMessage = null;
-                    
-                    renderChatMessages();
-                    renderGroups();
-                } else if (dmId) {
-                    const dm = directMessages.find(dm => dm.id === dmId);
-                    
-                    // Marcar mensajes como leídos
-                    if (dm.messages) {
-                        dm.messages.forEach(async msg => {
-                            if (msg.userId !== currentUser.id && !msg.read) {
-                                await directMessagesRef
-                                    .doc(dmId)
-                                    .collection('messages')
-                                    .doc(msg.id)
-                                    .update({ read: true });
-                                
-                                msg.read = true;
-                            }
-                        });
-                    }
-                    
-                    state.currentDirectMessage = dmId;
-                    state.currentGroup = null;
-                    
-                    renderChatMessages();
-                    renderGroups();
-                }
-            }
-            
-            const joinBtn = e.target.closest('.join-group-btn');
-            if (joinBtn) {
-                const groupCard = joinBtn.closest('.group-card');
-                const groupId = groupCard.dataset.groupId;
-                const group = getGroupById(groupId);
-                
-                if (group.privacy === 'public') {
-                    try {
-                        await groupsRef.doc(groupId).update({
-                            members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
-                        });
-                        
-                        group.members.push(currentUser.id);
-                        renderGroups();
-                        alert(`Te has unido al grupo ${group.name}`);
-                        
-                    } catch (error) {
-                        console.error("Error al unirse al grupo:", error);
-                        alert("Error al unirse al grupo: " + error.message);
-                    }
-                }
-            }
-        });
+            renderChatMessages();
+            renderGroups();
+        }
+    }
+});
 
         createGroupBtn.addEventListener('click', function() {
             createGroupForm.style.display = 'block';
