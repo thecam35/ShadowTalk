@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeoForo - Comunidad Futurista</title>
+    <title>NeoForo - Comunidad</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
@@ -11,16 +11,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
     <style>
         :root {
-            --primary: #4a89dc;
-            --secondary: #65678f;
-            --dark: #1a1a2e;
-            --light: #e6e6ff;
-            --accent: #d770ad;async function loadInitialData() {
-
-            --glass: rgba(25, 25, 60, 0.7);
-            --success: #48cfad;
-            --warning: #f6bb42;
-            --danger: #ed5565;
+            --primary: #4a6fa5;
+            --secondary: #6b8cae;
+            --dark: #2d3e50;
+            --light: #f5f7fa;
+            --accent: #88a2aa;
+            --glass: rgba(255, 255, 255, 0.15);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --text-dark: #333;
+            --text-light: #f5f5f5;
         }
 
         * {
@@ -31,11 +32,8 @@
         }
 
         body {
-            background-color: var(--dark);
-            color: var(--light);
-            background-image: 
-                radial-gradient(circle at 25% 25%, var(--secondary) 0%, transparent 30%),
-                radial-gradient(circle at 75% 75%, var(--primary) 0%, transparent 30%);
+            background-color: var(--light);
+            color: var(--text-dark);
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -51,7 +49,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Modo pantalla completa para el chat */
         .app-container.chat-fullscreen {
             grid-template-columns: 1fr;
             max-width: 100%;
@@ -74,7 +71,6 @@
             box-shadow: none;
         }
 
-        /* Sidebar */
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -82,7 +78,6 @@
             overflow-y: auto;
         }
 
-        /* Panel principal del foro */
         .forum-panel {
             display: flex;
             flex-direction: column;
@@ -91,51 +86,41 @@
             padding-right: 10px;
         }
 
-        /* Panel del chat */
         .chat-panel {
             display: flex;
             flex-direction: column;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: white;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             overflow: hidden;
             height: 100%;
         }
 
-        /* Estilos comunes para tarjetas */
         .card {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: white;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
             padding: 20px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             transition: transform 0.3s, box-shadow 0.3s;
         }
 
         .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(74, 137, 220, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
-        /* Encabezados */
         h1, h2, h3, h4 {
             color: var(--primary);
             margin-bottom: 15px;
         }
 
         h1 {
-            font-size: 2.2rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            display: inline-block;
+            font-size: 2rem;
+            color: var(--primary);
         }
 
-        /* Formularios */
         .form-group {
             margin-bottom: 15px;
         }
@@ -145,15 +130,16 @@
             margin-bottom: 8px;
             color: var(--primary);
             font-size: 0.9rem;
+            font-weight: 500;
         }
 
         input, textarea, select {
             width: 100%;
             padding: 12px 15px;
-            background: rgba(20, 20, 40, 0.7);
-            border: 1px solid rgba(74, 137, 220, 0.3);
-            border-radius: 8px;
-            color: var(--light);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            color: var(--text-dark);
             font-size: 1rem;
             transition: all 0.3s;
         }
@@ -161,7 +147,7 @@
         input:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(74, 137, 220, 0.2);
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.1);
         }
 
         textarea {
@@ -169,43 +155,55 @@
             resize: vertical;
         }
 
-        /* Botones */
         .btn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--primary);
             color: white;
             border: none;
             padding: 12px 25px;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: 500;
             font-size: 0.9rem;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(74, 137, 220, 0.3);
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(74, 137, 220, 0.4);
+            background-color: var(--secondary);
+            transform: translateY(-1px);
         }
 
         .btn-secondary {
-            background: transparent;
+            background: white;
             color: var(--primary);
             border: 1px solid var(--primary);
         }
 
+        .btn-secondary:hover {
+            background-color: #f5f7fa;
+        }
+
         .btn-success {
-            background: linear-gradient(135deg, var(--success), #37bc9b);
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background-color: #43a047;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #da4453);
+            background: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #e53935;
         }
 
         .btn-warning {
-            background: linear-gradient(135deg, var(--warning), #e6a23c);
+            background: var(--warning);
+        }
+
+        .btn-warning:hover {
+            background-color: #fb8c00;
         }
 
         .btn-sm {
@@ -217,17 +215,21 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--glass);
-            color: var(--light);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: white;
+            color: var(--primary);
+            border: 1px solid rgba(0, 0, 0, 0.1);
             padding: 8px 15px;
             border-radius: 20px;
             font-size: 0.8rem;
             z-index: 1000;
             cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        /* Publicaciones */
+        .btn-chat-toggle:hover {
+            background-color: #f5f7fa;
+        }
+
         .post {
             position: relative;
             overflow: hidden;
@@ -271,7 +273,7 @@
         }
 
         .post-meta {
-            color: rgba(224, 224, 255, 0.7);
+            color: #777;
             font-size: 0.8rem;
         }
 
@@ -289,38 +291,34 @@
         .action-btn {
             background: none;
             border: none;
-            color: var(--light);
+            color: #777;
             display: flex;
             align-items: center;
             gap: 5px;
             cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.3s;
+            transition: color 0.3s;
         }
 
         .action-btn:hover {
-            opacity: 1;
             color: var(--primary);
         }
 
-        /* Comentarios */
         .comments-section {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid #eee;
         }
 
         .comment {
             margin-bottom: 15px;
             padding-left: 15px;
-            border-left: 2px solid rgba(74, 137, 220, 0.3);
+            border-left: 2px solid #eee;
         }
 
-        /* Chat */
         .chat-header {
             padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: white;
+            border-bottom: 1px solid #eee;
             position: relative;
         }
 
@@ -331,11 +329,12 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-color: #f9f9f9;
         }
 
         .message {
             max-width: 80%;
-            padding: 10px 15px;
+            padding: 12px 16px;
             border-radius: 12px;
             position: relative;
             animation: fadeIn 0.3s ease-out;
@@ -348,23 +347,26 @@
 
         .message.user {
             align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary), rgba(74, 137, 220, 0.3));
+            background: var(--primary);
+            color: white;
             border-bottom-right-radius: 0;
         }
 
         .message.other {
             align-self: flex-start;
-            background: rgba(255, 255, 255, 0.1);
+            background: white;
+            border: 1px solid #eee;
             border-bottom-left-radius: 0;
         }
 
         .message.system {
             align-self: center;
-            background: rgba(255, 255, 255, 0.05);
+            background: #f0f4f8;
             border-radius: 12px;
             text-align: center;
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
+            color: #777;
+            padding: 8px 12px;
         }
 
         .message-user {
@@ -376,15 +378,19 @@
 
         .message-time {
             font-size: 0.7rem;
-            opacity: 0.6;
+            opacity: 0.8;
             text-align: right;
             margin-top: 5px;
         }
 
+        .message.user .message-time {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
         .chat-input {
             padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: white;
+            border-top: 1px solid #eee;
         }
 
         .chat-form {
@@ -394,25 +400,25 @@
 
         .chat-form input {
             flex: 1;
-            background: rgba(20, 20, 40, 0.7);
+            background: white;
         }
 
-        /* Grupos */
         .group-card {
             margin-bottom: 15px;
             padding: 15px;
-            border-radius: 10px;
-            background: rgba(30, 30, 60, 0.5);
+            border-radius: 8px;
+            background: white;
             transition: all 0.3s;
             cursor: pointer;
+            border: 1px solid #eee;
         }
 
         .group-card:hover {
-            background: rgba(40, 40, 80, 0.7);
+            background: #f5f7fa;
         }
 
         .group-card.active {
-            background: linear-gradient(135deg, rgba(74, 137, 220, 0.3), rgba(101, 103, 143, 0.3));
+            background: #f0f4f8;
             border-left: 3px solid var(--primary);
         }
 
@@ -458,12 +464,13 @@
             justify-content: center;
             font-size: 0.7rem;
             margin-right: 5px;
-            background-color: rgba(74, 137, 220, 0.5);
+            background-color: #e0e7f1;
+            color: var(--primary);
         }
 
         .group-last-message {
             font-size: 0.8rem;
-            opacity: 0.7;
+            color: #777;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -478,31 +485,31 @@
             margin-left: 5px;
         }
 
-        /* Pestañas */
         .tabs {
             display: flex;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid #eee;
             margin-bottom: 15px;
         }
 
         .tab {
             padding: 10px 15px;
             cursor: pointer;
-            opacity: 0.7;
+            color: #777;
             transition: all 0.3s;
             border-bottom: 2px solid transparent;
+            font-size: 0.9rem;
         }
 
         .tab:hover {
-            opacity: 1;
+            color: var(--primary);
         }
 
         .tab.active {
-            opacity: 1;
+            color: var(--primary);
             border-bottom: 2px solid var(--primary);
+            font-weight: 500;
         }
 
-        /* Badges */
         .badge {
             display: inline-block;
             padding: 3px 7px;
@@ -533,22 +540,24 @@
             background-color: var(--danger);
         }
 
-        /* Scrollbar personalizada */
         ::-webkit-scrollbar {
             width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(20, 20, 40, 0.5);
+            background: #f1f1f1;
             border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(var(--primary), var(--secondary));
+            background: #c1c1c1;
             border-radius: 10px;
         }
 
-        /* Modal */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -556,20 +565,20 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 2000;
             align-items: center;
             justify-content: center;
         }
 
         .modal-content {
-            background: var(--dark);
-            border-radius: 15px;
+            background: white;
+            border-radius: 12px;
             padding: 20px;
             width: 90%;
             max-width: 500px;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 20px rgba(74, 137, 220, 0.5);
+            border: 1px solid #eee;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .modal-header {
@@ -577,17 +586,23 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
         }
 
         .close-modal {
             background: none;
             border: none;
-            color: var(--light);
+            color: #777;
             font-size: 1.5rem;
             cursor: pointer;
+            transition: color 0.3s;
         }
 
-        /* Avatar upload */
+        .close-modal:hover {
+            color: var(--primary);
+        }
+
         .avatar-upload {
             display: flex;
             flex-direction: column;
@@ -603,13 +618,12 @@
             background-position: center;
             margin-bottom: 15px;
             border: 3px solid var(--primary);
-            background-color: var(--secondary);
+            background-color: #f0f4f8;
         }
 
-        /* Invite link */
         .invite-link-container {
             margin-top: 20px;
-            background: rgba(20, 20, 40, 0.7);
+            background: #f5f7fa;
             padding: 15px;
             border-radius: 8px;
             display: flex;
@@ -619,34 +633,34 @@
 
         .invite-link {
             word-break: break-all;
-            background: rgba(0, 0, 0, 0.3);
+            background: white;
             padding: 10px;
             border-radius: 5px;
             font-size: 0.9rem;
+            border: 1px solid #eee;
         }
 
         .copy-btn {
             align-self: flex-end;
         }
 
-        /* Login/Register forms */
         .auth-container {
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ed 100%);
         }
 
         .auth-card {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
+            background: white;
+            border-radius: 12px;
             padding: 30px;
             width: 100%;
             max-width: 400px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #eee;
         }
 
         .auth-title {
@@ -659,19 +673,72 @@
             text-align: center;
             margin-top: 20px;
             font-size: 0.9rem;
+            color: #777;
         }
 
         .auth-switch a {
             color: var(--primary);
             text-decoration: none;
             cursor: pointer;
+            font-weight: 500;
         }
 
         .auth-switch a:hover {
             text-decoration: underline;
         }
 
-        /* Responsive */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .group-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .group-actions .btn-sm {
+            flex: 1;
+        }
+
+        .muted-group {
+            opacity: 0.7;
+            background-color: #f5f5f5;
+        }
+
+        .user-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ccc;
+            margin-left: 5px;
+            display: inline-block;
+        }
+
+        .user-status.online {
+            background-color: var(--success);
+        }
+
+        .user-status.offline {
+            background-color: #ccc;
+        }
+
+        .user-status.away {
+            background-color: var(--warning);
+        }
+
         @media (max-width: 1200px) {
             .app-container {
                 grid-template-columns: 1fr 350px;
@@ -769,6 +836,7 @@
                     <div class="tabs">
                         <div class="tab active" data-tab="my-groups">Mis Grupos</div>
                         <div class="tab" data-tab="discover">Descubrir</div>
+                        <div class="tab" data-tab="direct-messages">Mensajes</div>
                     </div>
                     
                     <div id="groups-list">
@@ -816,7 +884,7 @@
             <div class="forum-panel">
                 <header class="card">
                     <h1>COMUNIDAD</h1>
-                    <p>Descubre Grupos</p>
+                    <p>Bienvenido a la comunidad</p>
                 </header>
 
                 <!-- Formulario para nueva publicación -->
@@ -902,6 +970,7 @@
                     <label for="new-display-name">Nombre para mostrar (opcional)</label>
                     <input type="text" id="new-display-name" placeholder="Cómo quieres que te vean los demás">
                 </div>
+                <div id="username-change-info" style="font-size: 0.8rem; color: #777; margin-bottom: 15px;"></div>
                 <button class="btn btn-success" id="save-username-btn">Guardar cambios</button>
             </div>
         </div>
@@ -925,6 +994,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal para gestión de grupo -->
+        <div class="modal" id="group-management-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="group-management-title">Gestionar Grupo</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label for="edit-group-name">Nombre del grupo</label>
+                    <input type="text" id="edit-group-name" placeholder="Nombre del grupo" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-group-description">Descripción</label>
+                    <textarea id="edit-group-description" placeholder="Descripción del grupo"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-group-privacy">Privacidad</label>
+                    <select id="edit-group-privacy">
+                        <option value="private">Privado (solo por invitación)</option>
+                        <option value="public">Público (cualquiera puede unirse)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Miembros del grupo</label>
+                    <div id="group-members-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; padding: 10px;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="mute-group">Silenciar notificaciones</label>
+                    <select id="mute-group">
+                        <option value="0">No silenciar</option>
+                        <option value="1">1 hora</option>
+                        <option value="8">8 horas</option>
+                        <option value="24">1 día</option>
+                        <option value="168">1 semana</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-success" id="save-group-changes-btn">Guardar cambios</button>
+                    <button class="btn btn-danger" id="delete-group-btn">Eliminar grupo</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -945,7 +1057,7 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // Configurar reglas de seguridad (simuladas en el cliente)
+        // Configurar reglas de seguridad
         db.settings({
             merge: true,
             ignoreUndefinedProperties: true
@@ -957,6 +1069,8 @@
         const groupsRef = db.collection("groups");
         const messagesRef = db.collection("messages");
         const commentsRef = db.collection("comments");
+        const directMessagesRef = db.collection("directMessages");
+        const notificationsRef = db.collection("notifications");
 
         // Datos de la aplicación
         let currentUser = null;
@@ -964,14 +1078,20 @@
         let posts = [];
         let groups = [];
         let chatMessages = [];
+        let directMessages = [];
+        let notifications = [];
 
         // Estado de la aplicación
         let state = {
             currentGroup: null,
+            currentDirectMessage: null,
             chatFullscreen: false,
             activeTab: 'my-groups',
             tempAvatar: null,
-            currentInviteGroup: null
+            currentInviteGroup: null,
+            currentManagedGroup: null,
+            usernameChangeDate: null,
+            onlineUsers: []
         };
 
         // DOM Elements
@@ -1011,12 +1131,22 @@
         const newUsernameInput = document.getElementById('new-username');
         const newDisplayNameInput = document.getElementById('new-display-name');
         const saveUsernameBtn = document.getElementById('save-username-btn');
+        const usernameChangeInfo = document.getElementById('username-change-info');
         const inviteModal = document.getElementById('invite-modal');
         const inviteLinkText = document.getElementById('invite-link-text');
         const copyInviteBtn = document.getElementById('copy-invite-btn');
         const inviteMembersSelect = document.getElementById('invite-members-select');
         const sendInvitesBtn = document.getElementById('send-invites-btn');
         const inviteModalTitle = document.getElementById('invite-modal-title');
+        const groupManagementModal = document.getElementById('group-management-modal');
+        const editGroupName = document.getElementById('edit-group-name');
+        const editGroupDescription = document.getElementById('edit-group-description');
+        const editGroupPrivacy = document.getElementById('edit-group-privacy');
+        const groupMembersList = document.getElementById('group-members-list');
+        const muteGroupSelect = document.getElementById('mute-group');
+        const saveGroupChangesBtn = document.getElementById('save-group-changes-btn');
+        const deleteGroupBtn = document.getElementById('delete-group-btn');
+        const groupManagementTitle = document.getElementById('group-management-title');
 
         // Funciones auxiliares
         function formatDate(dateString) {
@@ -1059,6 +1189,28 @@
             usernameDisplay.textContent = currentUser.name;
             userNameDisplay.textContent = currentUser.displayName || currentUser.name;
             updateAvatarDisplay(userAvatar, currentUser);
+            
+            // Actualizar información de cambio de nombre
+            if (currentUser.usernameChangeDate) {
+                const lastChange = new Date(currentUser.usernameChangeDate);
+                const nextChange = new Date(lastChange);
+                nextChange.setMonth(nextChange.getMonth() + 6);
+                
+                const now = new Date();
+                const canChange = now >= nextChange;
+                
+                if (canChange) {
+                    usernameChangeInfo.textContent = "Puedes cambiar tu nombre de usuario ahora.";
+                    saveUsernameBtn.disabled = false;
+                } else {
+                    const monthsLeft = 6 - Math.floor((now - lastChange) / (1000 * 60 * 60 * 24 * 30));
+                    usernameChangeInfo.textContent = `Podrás cambiar tu nombre nuevamente en ${monthsLeft} meses.`;
+                    saveUsernameBtn.disabled = true;
+                }
+            } else {
+                usernameChangeInfo.textContent = "Puedes cambiar tu nombre de usuario ahora.";
+                saveUsernameBtn.disabled = false;
+            }
         }
 
         // Renderizar publicaciones
@@ -1103,23 +1255,25 @@
                     
                     <div class="comments-section">
                         <h4>Comentarios</h4>
-                        ${post.comments ? post.comments.map(comment => {
-                            const commentUser = getUserById(comment.userId);
-                            return `
-                                <div class="comment">
-                                    <div class="post-user" style="margin-bottom: 5px;">
-                                        <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${commentUser.avatarUrl ? `url(${commentUser.avatarUrl})` : 'none'};">
-                                            ${commentUser.avatarUrl ? '' : commentUser.avatar}
+                        ${post.comments && post.comments.length > 0 ? 
+                            post.comments.map(comment => {
+                                const commentUser = getUserById(comment.userId);
+                                return `
+                                    <div class="comment">
+                                        <div class="post-user" style="margin-bottom: 5px;">
+                                            <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${commentUser.avatarUrl ? `url(${commentUser.avatarUrl})` : 'none'};">
+                                                ${commentUser.avatarUrl ? '' : commentUser.avatar}
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 0.9rem;">${commentUser.displayName || commentUser.name}</div>
+                                                <div class="post-meta" style="font-size: 0.7rem;">${formatDate(comment.date)}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div style="font-size: 0.9rem;">${commentUser.displayName || commentUser.name}</div>
-                                            <div class="post-meta" style="font-size: 0.7rem;">${formatDate(comment.date)}</div>
-                                        </div>
+                                        <div>${comment.text}</div>
                                     </div>
-                                    <div>${comment.text}</div>
-                                </div>
-                            `;
-                        }).join('') : ''}
+                                `;
+                            }).join('') : 
+                            '<p style="opacity: 0.7; text-align: center;">No hay comentarios aún</p>'}
                         
                         <form class="comment-form" style="margin-top: 15px;">
                             <input type="hidden" name="postId" value="${post.id}">
@@ -1131,6 +1285,54 @@
                 
                 postsContainer.appendChild(postElement);
             });
+
+            // Agregar event listeners a los formularios de comentarios
+            document.querySelectorAll('.comment-form').forEach(form => {
+                form.addEventListener('submit', handleCommentSubmit);
+            });
+        }
+
+        // Función para manejar el envío de comentarios
+        async function handleCommentSubmit(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const postId = form.querySelector('input[name="postId"]').value;
+            const commentInput = form.querySelector('input[type="text"]');
+            const commentText = commentInput.value.trim();
+            
+            if (!commentText) return;
+            
+            try {
+                const newComment = {
+                    userId: currentUser.id,
+                    text: commentText,
+                    date: new Date().toISOString(),
+                    postId: postId
+                };
+                
+                // Guardar en Firestore
+                const commentRef = await commentsRef.doc(postId)
+                    .collection('post_comments')
+                    .add(newComment);
+                
+                newComment.id = commentRef.id;
+                
+                // Actualizar localmente
+                const post = posts.find(p => p.id === postId);
+                if (!post.comments) post.comments = [];
+                post.comments.push(newComment);
+                
+                // Renderizar nuevamente
+                renderPosts();
+                
+                // Resetear el formulario
+                commentInput.value = '';
+                
+            } catch (error) {
+                console.error("Error al publicar comentario:", error);
+                alert("Error al publicar el comentario. Por favor intenta nuevamente.");
+            }
         }
 
         // Renderizar mensajes del chat
@@ -1138,10 +1340,8 @@
             chatMessagesContainer.innerHTML = '';
             
             if (state.currentGroup) {
-                // Mostrar mensajes del grupo seleccionado
                 const group = getGroupById(state.currentGroup);
                 
-                // Mensaje de inicio del grupo
                 const welcomeMsg = document.createElement('div');
                 welcomeMsg.className = 'message system';
                 welcomeMsg.innerHTML = `
@@ -1150,7 +1350,6 @@
                 `;
                 chatMessagesContainer.appendChild(welcomeMsg);
                 
-                // Mostrar mensajes del grupo
                 if (group.messages) {
                     group.messages.forEach(msg => {
                         const user = getUserById(msg.userId);
@@ -1172,8 +1371,41 @@
                         chatMessagesContainer.appendChild(messageElement);
                     });
                 }
+            } else if (state.currentDirectMessage) {
+                const dm = directMessages.find(dm => dm.id === state.currentDirectMessage);
+                const otherUserId = dm.participants.find(id => id !== currentUser.id);
+                const otherUser = getUserById(otherUserId);
+                
+                const welcomeMsg = document.createElement('div');
+                welcomeMsg.className = 'message system';
+                welcomeMsg.innerHTML = `
+                    <div class="message-text">Conversación privada con <strong>${otherUser.displayName || otherUser.name}</strong></div>
+                    <div class="message-time">Ahora mismo</div>
+                `;
+                chatMessagesContainer.appendChild(welcomeMsg);
+                
+                if (dm.messages) {
+                    dm.messages.forEach(msg => {
+                        const user = getUserById(msg.userId);
+                        const isCurrentUser = msg.userId === currentUser.id;
+                        
+                        const messageElement = document.createElement('div');
+                        messageElement.className = `message ${isCurrentUser ? 'user' : 'other'}`;
+                        messageElement.innerHTML = `
+                            <div class="message-user-avatar" style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${user.avatarUrl ? `url(${user.avatarUrl})` : 'none'};">
+                                    ${user.avatarUrl ? '' : user.avatar}
+                                </div>
+                                <div class="message-user">${user.displayName || user.name}</div>
+                            </div>
+                            <div class="message-text">${msg.text}</div>
+                            <div class="message-time">${formatTime(msg.time)}</div>
+                        `;
+                        
+                        chatMessagesContainer.appendChild(messageElement);
+                    });
+                }
             } else {
-                // Mostrar chat global
                 chatMessages.forEach(msg => {
                     const user = getUserById(msg.userId);
                     const isCurrentUser = msg.userId === currentUser.id;
@@ -1195,78 +1427,164 @@
                 });
             }
             
-            // Auto-scroll al final
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
         }
 
-        // Renderizar lista de grupos
+        // Renderizar lista de grupos y mensajes directos
         function renderGroups() {
             groupsList.innerHTML = '';
             
-            const filteredGroups = state.activeTab === 'my-groups' 
-                ? groups.filter(group => group.members.includes(currentUser.id))
-                : groups.filter(group => group.privacy === 'public' && !group.members.includes(currentUser.id));
-            
-            if (filteredGroups.length === 0) {
-                groupsList.innerHTML = `
-                    <div style="text-align: center; padding: 20px; opacity: 0.7;">
-                        ${state.activeTab === 'my-groups' 
-                            ? 'No estás en ningún grupo. Crea uno o únete a grupos públicos.' 
-                            : 'No hay grupos públicos disponibles en este momento.'}
-                    </div>
-                `;
-                return;
-            }
-            
-            filteredGroups.forEach(group => {
-                const lastMessageUser = group.lastMessage ? getUserById(group.lastMessage.userId) : null;
-                const isMember = group.members.includes(currentUser.id);
-                const isCreator = group.creatorId === currentUser.id;
+            if (state.activeTab === 'my-groups') {
+                const filteredGroups = groups.filter(group => group.members.includes(currentUser.id));
                 
-                const groupElement = document.createElement('div');
-                groupElement.className = `group-card ${state.currentGroup === group.id ? 'active' : ''} ${!isMember ? 'not-member' : ''}`;
-                groupElement.dataset.groupId = group.id;
-                groupElement.innerHTML = `
-                    <div class="group-card-header">
-                        <div class="group-avatar" style="background-image: ${group.avatarUrl ? `url(${group.avatarUrl})` : 'none'};">
-                            ${group.avatarUrl ? '' : group.name.charAt(0)}
+                if (filteredGroups.length === 0) {
+                    groupsList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                            No estás en ningún grupo. Crea uno o únete a grupos públicos.
                         </div>
-                        <div class="group-name">${group.name}</div>
-                        ${group.unread > 0 ? `<span class="badge badge-primary">${group.unread}</span>` : ''}
-                    </div>
-                    ${group.lastMessage ? `
-                        <div class="group-last-message">
-                            ${lastMessageUser ? `${lastMessageUser.displayName || lastMessageUser.name}: ` : ''}${group.lastMessage.text}
+                    `;
+                    return;
+                }
+                
+                filteredGroups.forEach(group => {
+                    const lastMessageUser = group.lastMessage ? getUserById(group.lastMessage.userId) : null;
+                    const isCreator = group.creatorId === currentUser.id;
+                    
+                    const groupElement = document.createElement('div');
+                    groupElement.className = `group-card ${state.currentGroup === group.id ? 'active' : ''} ${group.mutedUntil && new Date(group.mutedUntil) > new Date() ? 'muted-group' : ''}`;
+                    groupElement.dataset.groupId = group.id;
+                    groupElement.innerHTML = `
+                        <div class="group-card-header">
+                            <div class="group-avatar" style="background-image: ${group.avatarUrl ? `url(${group.avatarUrl})` : 'none'};">
+                                ${group.avatarUrl ? '' : group.name.charAt(0)}
+                            </div>
+                            <div class="group-name">${group.name}</div>
+                            ${group.unread > 0 ? `<span class="badge badge-primary">${group.unread}</span>` : ''}
                         </div>
-                    ` : ''}
-                    <div class="group-members">
-                        ${group.members.slice(0, 5).map(memberId => {
-                            const member = getUserById(memberId);
-                            return `<div class="member-avatar" title="${member.displayName || member.name}" style="background-image: ${member.avatarUrl ? `url(${member.avatarUrl})` : 'none'};">
-                                ${member.avatarUrl ? '' : member.avatar}
-                            </div>`;
-                        }).join('')}
-                        ${group.members.length > 5 ? `<div class="member-avatar">+${group.members.length - 5}</div>` : ''}
-                    </div>
-                    ${!isMember ? `
+                        ${group.lastMessage ? `
+                            <div class="group-last-message">
+                                ${lastMessageUser ? `${lastMessageUser.displayName || lastMessageUser.name}: ` : ''}${group.lastMessage.text}
+                            </div>
+                        ` : ''}
+                        <div class="group-members">
+                            ${group.members.slice(0, 5).map(memberId => {
+                                const member = getUserById(memberId);
+                                return `<div class="member-avatar" title="${member.displayName || member.name}" style="background-image: ${member.avatarUrl ? `url(${member.avatarUrl})` : 'none'};">
+                                    ${member.avatarUrl ? '' : member.avatar}
+                                </div>`;
+                            }).join('')}
+                            ${group.members.length > 5 ? `<div class="member-avatar">+${group.members.length - 5}</div>` : ''}
+                        </div>
+                        <div class="group-actions">
+                            ${isCreator ? `
+                                <button class="btn btn-primary btn-sm manage-group-btn">
+                                    Gestionar
+                                </button>
+                            ` : ''}
+                            ${group.mutedUntil && new Date(group.mutedUntil) > new Date() ? `
+                                <button class="btn btn-warning btn-sm unmute-group-btn">
+                                    Silenciado
+                                </button>
+                            ` : `
+                                <button class="btn btn-secondary btn-sm mute-group-btn">
+                                    Silenciar
+                                </button>
+                            `}
+                        </div>
+                    `;
+                    
+                    groupsList.appendChild(groupElement);
+                });
+                
+            } else if (state.activeTab === 'discover') {
+                const filteredGroups = groups.filter(group => group.privacy === 'public' && !group.members.includes(currentUser.id));
+                
+                if (filteredGroups.length === 0) {
+                    groupsList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                            No hay grupos públicos disponibles en este momento.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                filteredGroups.forEach(group => {
+                    const groupElement = document.createElement('div');
+                    groupElement.className = 'group-card not-member';
+                    groupElement.dataset.groupId = group.id;
+                    groupElement.innerHTML = `
+                        <div class="group-card-header">
+                            <div class="group-avatar" style="background-image: ${group.avatarUrl ? `url(${group.avatarUrl})` : 'none'};">
+                                ${group.avatarUrl ? '' : group.name.charAt(0)}
+                            </div>
+                            <div class="group-name">${group.name}</div>
+                        </div>
+                        <div class="group-last-message">${group.description || 'Grupo público'}</div>
+                        <div class="group-members">
+                            ${group.members.slice(0, 5).map(memberId => {
+                                const member = getUserById(memberId);
+                                return `<div class="member-avatar" title="${member.displayName || member.name}" style="background-image: ${member.avatarUrl ? `url(${member.avatarUrl})` : 'none'};">
+                                    ${member.avatarUrl ? '' : member.avatar}
+                                </div>`;
+                            }).join('')}
+                            ${group.members.length > 5 ? `<div class="member-avatar">+${group.members.length - 5}</div>` : ''}
+                        </div>
                         <button class="btn btn-success btn-sm join-group-btn" style="width: 100%; margin-top: 10px;">
                             Unirse al Grupo
                         </button>
-                    ` : ''}
-                    ${isMember && isCreator ? `
-                        <button class="btn btn-primary btn-sm invite-group-btn" style="width: 100%; margin-top: 10px;">
-                            Invitar miembros
-                        </button>
-                    ` : ''}
-                `;
+                    `;
+                    
+                    groupsList.appendChild(groupElement);
+                });
                 
-                groupsList.appendChild(groupElement);
-            });
+            } else if (state.activeTab === 'direct-messages') {
+                if (directMessages.length === 0) {
+                    groupsList.innerHTML = `
+                        <div style="text-align: center; padding: 20px; opacity: 0.7;">
+                            No tienes mensajes directos. Haz clic en un usuario para comenzar una conversación.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                directMessages.forEach(dm => {
+                    const otherUserId = dm.participants.find(id => id !== currentUser.id);
+                    const otherUser = getUserById(otherUserId);
+                    const lastMessage = dm.messages && dm.messages.length > 0 ? dm.messages[dm.messages.length - 1] : null;
+                    const unreadCount = dm.messages ? dm.messages.filter(msg => 
+                        msg.userId !== currentUser.id && !msg.read).length : 0;
+                    
+                    const dmElement = document.createElement('div');
+                    dmElement.className = `group-card ${state.currentDirectMessage === dm.id ? 'active' : ''}`;
+                    dmElement.dataset.dmId = dm.id;
+                    dmElement.innerHTML = `
+                        <div class="group-card-header">
+                            <div class="group-avatar" style="background-image: ${otherUser.avatarUrl ? `url(${otherUser.avatarUrl})` : 'none'};">
+                                ${otherUser.avatarUrl ? '' : otherUser.avatar}
+                            </div>
+                            <div class="group-name">${otherUser.displayName || otherUser.name}</div>
+                            ${unreadCount > 0 ? `<span class="badge badge-primary">${unreadCount}</span>` : ''}
+                            <span class="user-status ${state.onlineUsers.includes(otherUserId) ? 'online' : 'offline'}"></span>
+                        </div>
+                        ${lastMessage ? `
+                            <div class="group-last-message">
+                                ${lastMessage.userId === currentUser.id ? 'Tú: ' : ''}${lastMessage.text}
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    groupsList.appendChild(dmElement);
+                });
+            }
             
-            // Actualizar título del chat
             if (state.currentGroup) {
                 const group = getGroupById(state.currentGroup);
                 chatTitle.textContent = group.name;
+            } else if (state.currentDirectMessage) {
+                const dm = directMessages.find(dm => dm.id === state.currentDirectMessage);
+                const otherUserId = dm.participants.find(id => id !== currentUser.id);
+                const otherUser = getUserById(otherUserId);
+                chatTitle.textContent = otherUser.displayName || otherUser.name;
             } else {
                 chatTitle.textContent = 'Chat en vivo';
             }
@@ -1278,14 +1596,12 @@
             inviteMembersSelect.innerHTML = '';
             
             users.forEach(user => {
-                if (user.id !== currentUser.id) { // No incluir al usuario actual
-                    // Para el formulario de creación de grupo
+                if (user.id !== currentUser.id) {
                     const option = document.createElement('option');
                     option.value = user.id;
                     option.textContent = `${user.displayName || user.name} (${user.avatar})`;
                     groupMembersSelect.appendChild(option);
                     
-                    // Para el modal de invitación
                     const inviteOption = document.createElement('option');
                     inviteOption.value = user.id;
                     inviteOption.textContent = `${user.displayName || user.name} (${user.avatar})`;
@@ -1294,10 +1610,73 @@
             });
         }
 
-        // Simular usuarios conectados (aleatorio entre 1 y 50)
+        // Renderizar miembros del grupo en el modal de gestión
+        function renderGroupMembersList(groupId) {
+            groupMembersList.innerHTML = '';
+            const group = getGroupById(groupId);
+            
+            if (!group || !group.members) return;
+            
+            group.members.forEach(memberId => {
+                const member = getUserById(memberId);
+                const isCreator = group.creatorId === memberId;
+                const isCurrentUser = memberId === currentUser.id;
+                
+                const memberElement = document.createElement('div');
+                memberElement.style.display = 'flex';
+                memberElement.style.alignItems = 'center';
+                memberElement.style.justifyContent = 'space-between';
+                memberElement.style.padding = '8px';
+                memberElement.style.borderBottom = '1px solid #eee';
+                
+                memberElement.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="user-avatar" style="width: 30px; height: 30px; font-size: 0.8rem; background-image: ${member.avatarUrl ? `url(${member.avatarUrl})` : 'none'};">
+                            ${member.avatarUrl ? '' : member.avatar}
+                        </div>
+                        <div>
+                            <div style="font-weight: 500;">${member.displayName || member.name}</div>
+                            <div style="font-size: 0.8rem; color: #777;">
+                                ${isCreator ? 'Creador' : 'Miembro'}
+                                ${state.onlineUsers.includes(memberId) ? '• En línea' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ${!isCreator && !isCurrentUser ? `
+                        <button class="btn btn-danger btn-sm remove-member-btn" data-member-id="${memberId}">
+                            Eliminar
+                        </button>
+                    ` : ''}
+                `;
+                
+                groupMembersList.appendChild(memberElement);
+            });
+        }
+
+        // Simular usuarios conectados
         function updateOnlineUsers() {
-            onlineCount.textContent = Math.floor(Math.random() * 50) + 1;
-            setTimeout(updateOnlineUsers, 5000); // Actualizar cada 5 segundos
+            // Simular algunos usuarios en línea
+            const onlineCount = Math.min(users.length, Math.floor(Math.random() * 20) + 5);
+            state.onlineUsers = [];
+            
+            for (let i = 0; i < onlineCount; i++) {
+                const randomUser = users[Math.floor(Math.random() * users.length)];
+                if (randomUser && !state.onlineUsers.includes(randomUser.id)) {
+                    state.onlineUsers.push(randomUser.id);
+                }
+            }
+            
+            // Asegurarse de que el usuario actual esté en línea
+            if (currentUser && !state.onlineUsers.includes(currentUser.id)) {
+                state.onlineUsers.push(currentUser.id);
+            }
+            
+            document.getElementById('online-count').textContent = state.onlineUsers.length;
+            
+            // Actualizar la lista de grupos para mostrar estados
+            renderGroups();
+            
+            setTimeout(updateOnlineUsers, 10000);
         }
 
         // Alternar modo pantalla completa del chat
@@ -1320,12 +1699,35 @@
             state.currentInviteGroup = groupId;
             inviteModalTitle.textContent = `Invitar a ${group.name}`;
             
-            // Generar link de invitación
             const inviteLink = `${window.location.origin}?join_group=${group.id}&code=${group.inviteCode}`;
             inviteLinkText.textContent = inviteLink;
             
-            // Mostrar modal
             inviteModal.style.display = 'flex';
+        }
+
+        // Mostrar modal de gestión de grupo
+        function showGroupManagementModal(groupId) {
+            const group = getGroupById(groupId);
+            if (!group) return;
+            
+            state.currentManagedGroup = groupId;
+            groupManagementTitle.textContent = `Gestionar ${group.name}`;
+            
+            editGroupName.value = group.name;
+            editGroupDescription.value = group.description || '';
+            editGroupPrivacy.value = group.privacy || 'private';
+            
+            if (group.mutedUntil) {
+                const muteTime = Math.floor((new Date(group.mutedUntil) - new Date()) / (1000 * 60 * 60));
+                if (muteTime > 0) {
+                    muteGroupSelect.value = Math.min(muteTime, 168);
+                }
+            } else {
+                muteGroupSelect.value = '0';
+            }
+            
+            renderGroupMembersList(groupId);
+            groupManagementModal.style.display = 'flex';
         }
 
         // Subir archivo a Firebase Storage
@@ -1344,67 +1746,57 @@
         // Cargar datos iniciales de Firestore
         async function loadInitialData() {
             try {
-                // Verificar conexión a Internet
                 if (!navigator.onLine) {
                     throw new Error("No hay conexión a Internet");
                 }
 
-                // Verificar autenticación
                 if (!auth.currentUser) {
                     throw new Error("Usuario no autenticado");
                 }
 
                 console.log("Cargando datos iniciales...");
 
-                // Cargar usuarios con reintentos
-                let usersSnapshot;
-                try {
-                    usersSnapshot = await usersRef.get();
-                } catch (error) {
-                    console.error("Error al cargar usuarios, reintentando...", error);
-                    usersSnapshot = await usersRef.get();
-                }
-                
-                if (usersSnapshot.empty) {
-                    console.warn("No se encontraron usuarios en la base de datos");
-                }
+                // Cargar usuarios
+                const usersSnapshot = await usersRef.get();
                 users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 console.log(`${users.length} usuarios cargados`);
 
-                // Cargar publicaciones con reintentos
-                let postsSnapshot;
-                try {
-                    postsSnapshot = await postsRef.orderBy('date', 'desc').limit(50).get();
-                } catch (error) {
-                    console.error("Error al cargar publicaciones, reintentando...", error);
-                    postsSnapshot = await postsRef.orderBy('date', 'desc').limit(50).get();
-                }
-                posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Cargar publicaciones
+                const postsSnapshot = await postsRef.orderBy('date', 'desc').limit(50).get();
+                posts = postsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), comments: [] }));
                 console.log(`${posts.length} publicaciones cargadas`);
 
-                // Cargar grupos con reintentos
-                let groupsSnapshot;
-                try {
-                    groupsSnapshot = await groupsRef.get();
-                } catch (error) {
-                    console.error("Error al cargar grupos, reintentando...", error);
-                    groupsSnapshot = await groupsRef.get();
+                // Cargar comentarios para cada publicación
+                for (const post of posts) {
+                    try {
+                        const commentsSnapshot = await commentsRef
+                            .doc(post.id)
+                            .collection('post_comments')
+                            .orderBy('date', 'asc')
+                            .get();
+                        
+                        post.comments = commentsSnapshot.docs.map(doc => ({ 
+                            id: doc.id, 
+                            ...doc.data(),
+                            userId: doc.data().userId || 'unknown'
+                        }));
+                    } catch (error) {
+                        console.error(`Error cargando comentarios para post ${post.id}:`, error);
+                        post.comments = [];
+                    }
                 }
+
+                // Cargar grupos
+                const groupsSnapshot = await groupsRef.get();
                 groups = groupsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 console.log(`${groups.length} grupos cargados`);
 
-                // Cargar mensajes globales con reintentos
-                let messagesSnapshot;
-                try {
-                    messagesSnapshot = await messagesRef.orderBy('time').limit(100).get();
-                } catch (error) {
-                    console.error("Error al cargar mensajes globales, reintentando...", error);
-                    messagesSnapshot = await messagesRef.orderBy('time').limit(100).get();
-                }
+                // Cargar mensajes globales
+                const messagesSnapshot = await messagesRef.orderBy('time').limit(100).get();
                 chatMessages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 console.log(`${chatMessages.length} mensajes globales cargados`);
 
-                // Cargar mensajes de grupos con manejo de errores individual
+                // Cargar mensajes de grupos
                 for (const group of groups) {
                     try {
                         const groupMessagesSnapshot = await db.collection(`groups/${group.id}/messages`)
@@ -1423,6 +1815,45 @@
                     }
                 }
 
+                // Cargar mensajes directos
+                const directMessagesSnapshot = await directMessagesRef
+                    .where('participants', 'array-contains', currentUser.id)
+                    .get();
+                
+                directMessages = directMessagesSnapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data(),
+                    messages: []
+                }));
+                console.log(`${directMessages.length} conversaciones directas cargadas`);
+
+                // Cargar mensajes para cada conversación directa
+                for (const dm of directMessages) {
+                    try {
+                        const messagesSnapshot = await directMessagesRef
+                            .doc(dm.id)
+                            .collection('messages')
+                            .orderBy('time')
+                            .limit(100)
+                            .get();
+                        
+                        dm.messages = messagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    } catch (error) {
+                        console.error(`Error cargando mensajes para DM ${dm.id}:`, error);
+                        dm.messages = [];
+                    }
+                }
+
+                // Cargar notificaciones
+                const notificationsSnapshot = await notificationsRef
+                    .where('userId', '==', currentUser.id)
+                    .orderBy('timestamp', 'desc')
+                    .limit(20)
+                    .get();
+                
+                notifications = notificationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`${notifications.length} notificaciones cargadas`);
+
                 // Renderizar la aplicación
                 updateUserDisplay();
                 renderPosts();
@@ -1435,7 +1866,6 @@
             } catch (error) {
                 console.error("Error detallado al cargar datos:", error);
                 
-                // Mostrar mensaje de error específico
                 let errorMessage = "Error al cargar los datos. ";
                 
                 if (error.message.includes("permission") || error.message.includes("Missing or insufficient permissions")) {
@@ -1448,10 +1878,9 @@
                 
                 errorMessage += " Por favor recarga la página o intenta más tarde.";
                 
-                // Mostrar notificación más amigable
                 const errorElement = document.createElement('div');
                 errorElement.className = 'card';
-                errorElement.style.backgroundColor = 'rgba(237, 85, 101, 0.2)';
+                errorElement.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
                 errorElement.style.borderLeft = '3px solid var(--danger)';
                 errorElement.innerHTML = `
                     <h3 style="color: var(--danger);">Error al cargar datos</h3>
@@ -1459,7 +1888,6 @@
                     <button class="btn btn-sm" onclick="window.location.reload()">Recargar página</button>
                 `;
                 
-                // Insertar al principio del panel del foro
                 const forumPanel = document.querySelector('.forum-panel');
                 if (forumPanel) {
                     forumPanel.insertBefore(errorElement, forumPanel.firstChild);
@@ -1480,17 +1908,14 @@
                 let imageUrl = null;
                 let fileUrl = null;
                 
-                // Subir imagen si existe
                 if (imageInput.files[0]) {
                     imageUrl = await uploadFile(imageInput.files[0], 'post_images');
                 }
                 
-                // Subir archivo si existe
                 if (fileInput.files[0]) {
                     fileUrl = await uploadFile(fileInput.files[0], 'post_files');
                 }
                 
-                // Crear nueva publicación en Firestore
                 const newPost = {
                     userId: currentUser.id,
                     title: title,
@@ -1503,12 +1928,11 @@
                 
                 const docRef = await postsRef.add(newPost);
                 newPost.id = docRef.id;
-                posts.unshift(newPost); // Añadir al principio del array
+                posts.unshift(newPost);
                 
                 renderPosts();
                 postForm.reset();
                 
-                // Mostrar notificación
                 alert('¡Publicación creada con éxito!');
                 
             } catch (error) {
@@ -1525,18 +1949,16 @@
             
             if (messageText) {
                 try {
-                    // Crear nuevo mensaje
                     const newMessage = {
                         userId: currentUser.id,
                         text: messageText,
-                        time: new Date().toISOString()
+                        time: new Date().toISOString(),
+                        read: false
                     };
                     
                     if (state.currentGroup) {
-                        // Enviar mensaje al grupo
                         const group = getGroupById(state.currentGroup);
                         
-                        // Guardar en Firestore
                         const docRef = await db.collection(`groups/${state.currentGroup}/messages`).add(newMessage);
                         newMessage.id = docRef.id;
                         
@@ -1544,19 +1966,57 @@
                         group.messages.push(newMessage);
                         group.lastMessage = newMessage;
                         
-                        // Actualizar último mensaje en el grupo
                         await groupsRef.doc(state.currentGroup).update({
                             lastMessage: newMessage
                         });
                         
+                        // Enviar notificación a otros miembros del grupo
+                        group.members.forEach(async memberId => {
+                            if (memberId !== currentUser.id) {
+                                await notificationsRef.add({
+                                    userId: memberId,
+                                    type: 'group_message',
+                                    groupId: group.id,
+                                    senderId: currentUser.id,
+                                    message: messageText,
+                                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                    read: false
+                                });
+                            }
+                        });
+                        
+                    } else if (state.currentDirectMessage) {
+                        const dm = directMessages.find(dm => dm.id === state.currentDirectMessage);
+                        const otherUserId = dm.participants.find(id => id !== currentUser.id);
+                        
+                        const docRef = await directMessagesRef
+                            .doc(state.currentDirectMessage)
+                            .collection('messages')
+                            .add(newMessage);
+                        
+                        newMessage.id = docRef.id;
+                        
+                        if (!dm.messages) dm.messages = [];
+                        dm.messages.push(newMessage);
+                        
+                        // Enviar notificación al otro usuario
+                        await notificationsRef.add({
+                            userId: otherUserId,
+                            type: 'direct_message',
+                            senderId: currentUser.id,
+                            message: messageText,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false
+                        });
+                        
                     } else {
-                        // Enviar mensaje al chat global
                         const docRef = await messagesRef.add(newMessage);
                         newMessage.id = docRef.id;
                         chatMessages.push(newMessage);
                     }
                     
                     renderChatMessages();
+                    renderGroups();
                     input.value = '';
                     
                 } catch (error) {
@@ -1566,10 +2026,14 @@
             }
         });
 
-        // Seleccionar grupo
+        // Seleccionar grupo o mensaje directo
         groupsList.addEventListener('click', async function(e) {
             const groupCard = e.target.closest('.group-card');
             const inviteBtn = e.target.closest('.invite-group-btn');
+            const manageBtn = e.target.closest('.manage-group-btn');
+            const muteBtn = e.target.closest('.mute-group-btn');
+            const unmuteBtn = e.target.closest('.unmute-group-btn');
+            const removeMemberBtn = e.target.closest('.remove-member-btn');
             
             if (inviteBtn) {
                 const groupCard = inviteBtn.closest('.group-card');
@@ -1578,27 +2042,123 @@
                 return;
             }
             
-            if (groupCard) {
+            if (manageBtn) {
+                const groupCard = manageBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                showGroupManagementModal(groupId);
+                return;
+            }
+            
+            if (muteBtn) {
+                const groupCard = muteBtn.closest('.group-card');
                 const groupId = groupCard.dataset.groupId;
                 const group = getGroupById(groupId);
                 
-                // Verificar si el usuario es miembro
-                if (!group.members.includes(currentUser.id)) {
-                    return; // No hacer nada si no es miembro
+                try {
+                    await groupsRef.doc(groupId).update({
+                        mutedUntil: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 horas
+                    });
+                    
+                    group.mutedUntil = new Date(Date.now() + 8 * 60 * 60 * 1000);
+                    renderGroups();
+                    alert('Has silenciado las notificaciones de este grupo por 8 horas');
+                    
+                } catch (error) {
+                    console.error("Error al silenciar grupo:", error);
+                    alert("Error al silenciar el grupo: " + error.message);
                 }
-                
-                // Marcar como leído
-                group.unread = 0;
-                
-                // Establecer grupo actual
-                state.currentGroup = groupId;
-                
-                // Renderizar mensajes del grupo
-                renderChatMessages();
-                renderGroups();
+                return;
             }
             
-            // Unirse a grupo público
+            if (unmuteBtn) {
+                const groupCard = unmuteBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                try {
+                    await groupsRef.doc(groupId).update({
+                        mutedUntil: null
+                    });
+                    
+                    group.mutedUntil = null;
+                    renderGroups();
+                    alert('Has reactivado las notificaciones de este grupo');
+                    
+                } catch (error) {
+                    console.error("Error al reactivar notificaciones:", error);
+                    alert("Error al reactivar las notificaciones: " + error.message);
+                }
+                return;
+            }
+            
+            if (removeMemberBtn) {
+                const memberId = removeMemberBtn.dataset.memberId;
+                const groupId = state.currentManagedGroup;
+                
+                if (confirm(`¿Estás seguro de que quieres eliminar a este miembro del grupo?`)) {
+                    try {
+                        await groupsRef.doc(groupId).update({
+                            members: firebase.firestore.FieldValue.arrayRemove(memberId)
+                        });
+                        
+                        const group = getGroupById(groupId);
+                        group.members = group.members.filter(id => id !== memberId);
+                        
+                        renderGroupMembersList(groupId);
+                        renderGroups();
+                        alert('Miembro eliminado del grupo');
+                        
+                    } catch (error) {
+                        console.error("Error al eliminar miembro:", error);
+                        alert("Error al eliminar miembro: " + error.message);
+                    }
+                }
+                return;
+            }
+            
+            if (groupCard) {
+                const groupId = groupCard.dataset.groupId;
+                const dmId = groupCard.dataset.dmId;
+                
+                if (groupId) {
+                    const group = getGroupById(groupId);
+                    
+                    if (!group.members.includes(currentUser.id)) {
+                        return;
+                    }
+                    
+                    group.unread = 0;
+                    state.currentGroup = groupId;
+                    state.currentDirectMessage = null;
+                    
+                    renderChatMessages();
+                    renderGroups();
+                } else if (dmId) {
+                    const dm = directMessages.find(dm => dm.id === dmId);
+                    
+                    // Marcar mensajes como leídos
+                    if (dm.messages) {
+                        dm.messages.forEach(async msg => {
+                            if (msg.userId !== currentUser.id && !msg.read) {
+                                await directMessagesRef
+                                    .doc(dmId)
+                                    .collection('messages')
+                                    .doc(msg.id)
+                                    .update({ read: true });
+                                
+                                msg.read = true;
+                            }
+                        });
+                    }
+                    
+                    state.currentDirectMessage = dmId;
+                    state.currentGroup = null;
+                    
+                    renderChatMessages();
+                    renderGroups();
+                }
+            }
+            
             const joinBtn = e.target.closest('.join-group-btn');
             if (joinBtn) {
                 const groupCard = joinBtn.closest('.group-card');
@@ -1607,12 +2167,10 @@
                 
                 if (group.privacy === 'public') {
                     try {
-                        // Actualizar en Firestore
                         await groupsRef.doc(groupId).update({
                             members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
                         });
                         
-                        // Actualizar localmente
                         group.members.push(currentUser.id);
                         renderGroups();
                         alert(`Te has unido al grupo ${group.name}`);
@@ -1625,7 +2183,6 @@
             }
         });
 
-        // Mostrar/ocultar formulario de creación de grupo
         createGroupBtn.addEventListener('click', function() {
             createGroupForm.style.display = 'block';
             renderMemberOptions();
@@ -1636,7 +2193,6 @@
             groupForm.reset();
         });
 
-        // Crear nuevo grupo
         groupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1650,12 +2206,10 @@
             try {
                 let avatarUrl = null;
                 
-                // Subir avatar si existe
                 if (avatarInput.files[0]) {
                     avatarUrl = await uploadFile(avatarInput.files[0], 'group_avatars');
                 }
                 
-                // Crear nuevo grupo en Firestore
                 const newGroup = {
                     name: name,
                     description: description,
@@ -1665,7 +2219,8 @@
                     lastMessage: null,
                     unread: 0,
                     avatarUrl: avatarUrl,
-                    inviteCode: generateRandomString(10)
+                    inviteCode: generateRandomString(10),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
                 const docRef = await groupsRef.add(newGroup);
@@ -1674,14 +2229,11 @@
                 
                 groups.unshift(newGroup);
                 
-                // Reset form
                 groupForm.reset();
                 createGroupForm.style.display = 'none';
                 
-                // Mostrar notificación
                 alert(`¡Grupo "${name}" creado con éxito!`);
                 
-                // Renderizar grupos
                 renderGroups();
                 
             } catch (error) {
@@ -1690,30 +2242,31 @@
             }
         });
 
-        // Cambiar pestañas
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 state.activeTab = this.dataset.tab;
+                
+                if (state.activeTab === 'direct-messages') {
+                    state.currentGroup = null;
+                }
+                
                 renderGroups();
             });
         });
 
-        // Cambiar avatar de usuario
         userAvatar.addEventListener('click', function() {
             avatarModal.style.display = 'flex';
             updateAvatarDisplay(avatarPreview, currentUser);
         });
 
-        // Cambiar nombre de usuario
         changeUsernameBtn.addEventListener('click', function() {
             usernameModal.style.display = 'flex';
             newUsernameInput.value = currentUser.name;
             newDisplayNameInput.value = currentUser.displayName || '';
         });
 
-        // Guardar nuevo nombre de usuario
         saveUsernameBtn.addEventListener('click', async function() {
             const newUsername = newUsernameInput.value.trim();
             const newDisplayName = newDisplayNameInput.value.trim();
@@ -1724,7 +2277,6 @@
             }
             
             try {
-                // Verificar si el nombre de usuario ya existe
                 const usernameExists = users.some(user => 
                     user.id !== currentUser.id && user.name.toLowerCase() === newUsername.toLowerCase());
                 
@@ -1733,30 +2285,34 @@
                     return;
                 }
                 
-                // Actualizar en Firestore
-                await usersRef.doc(currentUser.id).update({
+                const updateData = {
                     name: newUsername,
-                    displayName: newDisplayName || firebase.firestore.FieldValue.delete()
-                });
+                    usernameChangeDate: firebase.firestore.FieldValue.serverTimestamp()
+                };
                 
-                // Actualizar datos del usuario localmente
+                if (newDisplayName) {
+                    updateData.displayName = newDisplayName;
+                } else {
+                    updateData.displayName = firebase.firestore.FieldValue.delete();
+                }
+                
+                await usersRef.doc(currentUser.id).update(updateData);
+                
                 currentUser.name = newUsername;
                 if (newDisplayName) {
                     currentUser.displayName = newDisplayName;
                 } else {
                     delete currentUser.displayName;
                 }
+                currentUser.usernameChangeDate = new Date().toISOString();
                 
-                // Actualizar la visualización
                 updateUserDisplay();
                 renderPosts();
                 renderGroups();
                 renderChatMessages();
                 
-                // Cerrar modal
                 usernameModal.style.display = 'none';
                 
-                // Mostrar notificación
                 alert('¡Nombre de usuario actualizado con éxito!');
                 
             } catch (error) {
@@ -1765,17 +2321,16 @@
             }
         });
 
-        // Cerrar modales
         closeModalBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 avatarModal.style.display = 'none';
                 usernameModal.style.display = 'none';
                 inviteModal.style.display = 'none';
+                groupManagementModal.style.display = 'none';
                 state.tempAvatar = null;
             });
         });
 
-        // Seleccionar imagen para avatar
         selectAvatarBtn.addEventListener('click', function() {
             avatarInput.click();
         });
@@ -1792,34 +2347,27 @@
             }
         });
 
-        // Guardar nuevo avatar
         saveAvatarBtn.addEventListener('click', async function() {
             if (state.tempAvatar) {
                 try {
-                    // Subir la imagen a Firebase Storage
                     const file = avatarInput.files[0];
                     const avatarUrl = await uploadFile(file, 'user_avatars');
                     
-                    // Actualizar en Firestore
                     await usersRef.doc(currentUser.id).update({
                         avatarUrl: avatarUrl
                     });
                     
-                    // Actualizar localmente
                     currentUser.avatarUrl = avatarUrl;
                     updateAvatarDisplay(userAvatar, currentUser);
                     
-                    // Cerrar modal y resetear
                     avatarModal.style.display = 'none';
                     state.tempAvatar = null;
                     avatarInput.value = '';
                     
-                    // Actualizar las vistas
                     renderPosts();
                     renderGroups();
                     renderChatMessages();
                     
-                    // Mostrar notificación
                     alert('¡Foto de perfil actualizada con éxito!');
                     
                 } catch (error) {
@@ -1829,7 +2377,6 @@
             }
         });
 
-        // Copiar link de invitación
         copyInviteBtn.addEventListener('click', function() {
             navigator.clipboard.writeText(inviteLinkText.textContent)
                 .then(() => {
@@ -1844,15 +2391,26 @@
                 });
         });
 
-        // Enviar invitaciones directas
         sendInvitesBtn.addEventListener('click', async function() {
             const selectedMembers = Array.from(inviteMembersSelect.selectedOptions)
                 .map(option => option.value);
             
             if (selectedMembers.length > 0) {
                 try {
-                    // Aquí podrías implementar el envío de notificaciones a los usuarios
-                    // Por ahora solo mostramos un mensaje
+                    const group = getGroupById(state.currentInviteGroup);
+                    
+                    // Enviar notificaciones a los usuarios invitados
+                    selectedMembers.forEach(async memberId => {
+                        await notificationsRef.add({
+                            userId: memberId,
+                            type: 'group_invite',
+                            groupId: group.id,
+                            senderId: currentUser.id,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            read: false
+                        });
+                    });
+                    
                     alert(`Invitaciones enviadas a ${selectedMembers.length} miembros`);
                     inviteModal.style.display = 'none';
                     
@@ -1865,9 +2423,85 @@
             }
         });
 
+        saveGroupChangesBtn.addEventListener('click', async function() {
+            const groupId = state.currentManagedGroup;
+            const name = editGroupName.value;
+            const description = editGroupDescription.value;
+            const privacy = editGroupPrivacy.value;
+            const muteDuration = parseInt(muteGroupSelect.value);
+            
+            try {
+                const updateData = {
+                    name: name,
+                    description: description,
+                    privacy: privacy
+                };
+                
+                if (muteDuration > 0) {
+                    updateData.mutedUntil = new Date(Date.now() + muteDuration * 60 * 60 * 1000);
+                } else {
+                    updateData.mutedUntil = null;
+                }
+                
+                await groupsRef.doc(groupId).update(updateData);
+                
+                const group = getGroupById(groupId);
+                group.name = name;
+                group.description = description;
+                group.privacy = privacy;
+                
+                if (muteDuration > 0) {
+                    group.mutedUntil = new Date(Date.now() + muteDuration * 60 * 60 * 1000);
+                } else {
+                    group.mutedUntil = null;
+                }
+                
+                renderGroups();
+                groupManagementModal.style.display = 'none';
+                
+                alert('Cambios guardados con éxito');
+                
+            } catch (error) {
+                console.error("Error al guardar cambios:", error);
+                alert("Error al guardar los cambios: " + error.message);
+            }
+        });
+
+        deleteGroupBtn.addEventListener('click', async function() {
+            const groupId = state.currentManagedGroup;
+            const group = getGroupById(groupId);
+            
+            if (confirm(`¿Estás seguro de que quieres eliminar el grupo "${group.name}"? Esta acción no se puede deshacer.`)) {
+                try {
+                    // Eliminar todos los mensajes del grupo primero
+                    const messagesSnapshot = await db.collection(`groups/${groupId}/messages`).get();
+                    const deletePromises = messagesSnapshot.docs.map(doc => doc.ref.delete());
+                    await Promise.all(deletePromises);
+                    
+                    // Luego eliminar el grupo
+                    await groupsRef.doc(groupId).delete();
+                    
+                    // Actualizar localmente
+                    groups = groups.filter(g => g.id !== groupId);
+                    if (state.currentGroup === groupId) {
+                        state.currentGroup = null;
+                    }
+                    
+                    renderGroups();
+                    renderChatMessages();
+                    groupManagementModal.style.display = 'none';
+                    
+                    alert('Grupo eliminado con éxito');
+                    
+                } catch (error) {
+                    console.error("Error al eliminar grupo:", error);
+                    alert("Error al eliminar el grupo: " + error.message);
+                }
+            }
+        });
+
         chatToggle.addEventListener('click', toggleChatFullscreen);
 
-        // Alternar entre login y registro
         showRegister.addEventListener('click', function() {
             loginPage.style.display = 'none';
             registerPage.style.display = 'flex';
@@ -1878,7 +2512,6 @@
             loginPage.style.display = 'flex';
         });
 
-        // Login con email y contraseña
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1890,7 +2523,6 @@
                 const userDoc = await usersRef.doc(userCredential.user.uid).get();
                 
                 if (!userDoc.exists) {
-                    // Crear documento de usuario si no existe
                     const emailName = email.split('@')[0];
                     await usersRef.doc(userCredential.user.uid).set({
                         name: emailName.toLowerCase().replace(/\s+/g, ''),
@@ -1898,28 +2530,25 @@
                         email: email,
                         avatar: emailName.charAt(0).toUpperCase() + emailName.split(' ').slice(-1)[0].charAt(0).toUpperCase(),
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                        usernameChangeDate: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } else {
-                    // Actualizar último login
                     await usersRef.doc(userCredential.user.uid).update({
                         lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 }
                 
-                // Obtener datos del usuario
                 currentUser = {
                     id: userCredential.user.uid,
                     email: userCredential.user.email,
                     ...(await usersRef.doc(userCredential.user.uid).get()).data()
                 };
                 
-                // Ocultar formularios de login/registro y mostrar la aplicación
                 loginPage.style.display = 'none';
                 registerPage.style.display = 'none';
                 appContent.style.display = 'block';
                 
-                // Cargar datos de la aplicación
                 await loadInitialData();
                 
             } catch (error) {
@@ -1940,7 +2569,6 @@
             }
         });
 
-        // Registro de nuevo usuario
         registerForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -1960,33 +2588,29 @@
             }
             
             try {
-                // Crear usuario en Firebase Auth
                 const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 
-                // Crear documento de usuario en Firestore
                 const newUser = {
                     name: name.toLowerCase().replace(/\s+/g, ''),
                     displayName: name,
                     email: email,
                     avatar: name.charAt(0).toUpperCase() + name.split(' ').slice(-1)[0].charAt(0).toUpperCase(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    usernameChangeDate: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
                 await usersRef.doc(userCredential.user.uid).set(newUser);
                 
-                // Actualizar usuario actual
                 currentUser = {
                     id: userCredential.user.uid,
                     ...newUser
                 };
                 
-                // Ocultar formularios de login/registro y mostrar la aplicación
                 registerPage.style.display = 'none';
                 loginPage.style.display = 'none';
                 appContent.style.display = 'block';
                 
-                // Cargar datos de la aplicación
                 await loadInitialData();
                 
             } catch (error) {
@@ -2007,19 +2631,131 @@
             }
         });
 
-        // Escuchar cambios en el estado de autenticación
+        // Escuchar cambios en tiempo real
+        function setupRealtimeListeners() {
+            // Escuchar nuevos mensajes globales
+            messagesRef.orderBy('time').limit(100).onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const newMessage = { id: change.doc.id, ...change.doc.data() };
+                        
+                        // Verificar si el mensaje ya existe
+                        if (!chatMessages.some(msg => msg.id === newMessage.id)) {
+                            chatMessages.push(newMessage);
+                            
+                            if (!state.currentGroup && !state.currentDirectMessage) {
+                                renderChatMessages();
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Escuchar nuevos mensajes en grupos
+            groups.forEach(group => {
+                db.collection(`groups/${group.id}/messages`)
+                    .orderBy('time')
+                    .limit(100)
+                    .onSnapshot(snapshot => {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const newMessage = { id: change.doc.id, ...change.doc.data() };
+                                
+                                if (!group.messages.some(msg => msg.id === newMessage.id)) {
+                                    if (!group.messages) group.messages = [];
+                                    group.messages.push(newMessage);
+                                    group.lastMessage = newMessage;
+                                    
+                                    // Incrementar contador de no leídos si no es el grupo actual
+                                    if (state.currentGroup !== group.id) {
+                                        group.unread = (group.unread || 0) + 1;
+                                    }
+                                    
+                                    if (state.currentGroup === group.id) {
+                                        renderChatMessages();
+                                    }
+                                    
+                                    renderGroups();
+                                }
+                            }
+                        });
+                    });
+            });
+            
+            // Escuchar nuevos mensajes directos
+            directMessages.forEach(dm => {
+                directMessagesRef.doc(dm.id)
+                    .collection('messages')
+                    .orderBy('time')
+                    .limit(100)
+                    .onSnapshot(snapshot => {
+                        snapshot.docChanges().forEach(change => {
+                            if (change.type === 'added') {
+                                const newMessage = { id: change.doc.id, ...change.doc.data() };
+                                
+                                if (!dm.messages.some(msg => msg.id === newMessage.id)) {
+                                    if (!dm.messages) dm.messages = [];
+                                    dm.messages.push(newMessage);
+                                    
+                                    // Marcar como leído si es la conversación actual
+                                    if (state.currentDirectMessage === dm.id) {
+                                        change.doc.ref.update({ read: true });
+                                        newMessage.read = true;
+                                    }
+                                    
+                                    if (state.currentDirectMessage === dm.id) {
+                                        renderChatMessages();
+                                    }
+                                    
+                                    renderGroups();
+                                }
+                            }
+                        });
+                    });
+            });
+            
+            // Escuchar nuevas notificaciones
+            notificationsRef
+                .where('userId', '==', currentUser.id)
+                .orderBy('timestamp', 'desc')
+                .limit(20)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const newNotification = { id: change.doc.id, ...change.doc.data() };
+                            
+                            if (!notifications.some(n => n.id === newNotification.id)) {
+                                notifications.unshift(newNotification);
+                                
+                                // Mostrar alerta para nuevas notificaciones
+                                if (newNotification.type === 'direct_message') {
+                                    const sender = getUserById(newNotification.senderId);
+                                    alert(`Nuevo mensaje de ${sender.displayName || sender.name}: ${newNotification.message}`);
+                                } else if (newNotification.type === 'group_message') {
+                                    const group = getGroupById(newNotification.groupId);
+                                    const sender = getUserById(newNotification.senderId);
+                                    alert(`Nuevo mensaje en ${group.name} de ${sender.displayName || sender.name}`);
+                                } else if (newNotification.type === 'group_invite') {
+                                    const group = getGroupById(newNotification.groupId);
+                                    const sender = getUserById(newNotification.senderId);
+                                    alert(`${sender.displayName || sender.name} te ha invitado al grupo ${group.name}`);
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
         auth.onAuthStateChanged(async (user) => {
             try {
                 if (user) {
                     console.log("Usuario autenticado detectado:", user.uid);
                     
-                    // Verificar si el documento de usuario existe
                     const userDoc = await usersRef.doc(user.uid).get();
                     
                     if (!userDoc.exists) {
                         console.log("Documento de usuario no existe, creando...");
                         
-                        // Datos básicos del usuario
                         const emailName = user.email ? user.email.split('@')[0] : 'user';
                         await usersRef.doc(user.uid).set({
                             name: emailName.toLowerCase().replace(/\s+/g, ''),
@@ -2027,35 +2763,32 @@
                             email: user.email,
                             avatar: emailName.charAt(0).toUpperCase(),
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            usernameChangeDate: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         
                         console.log("Documento de usuario creado exitosamente");
                     } else {
                         console.log("Documento de usuario encontrado");
-                        // Actualizar último login
                         await usersRef.doc(user.uid).update({
                             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     }
                     
-                    // Obtener datos del usuario
                     currentUser = {
                         id: user.uid,
                         email: user.email,
                         ...(await usersRef.doc(user.uid).get()).data()
                     };
                     
-                    // Cargar datos de la aplicación
                     await loadInitialData();
+                    setupRealtimeListeners();
                     
-                    // Mostrar aplicación
                     loginPage.style.display = 'none';
                     registerPage.style.display = 'none';
                     appContent.style.display = 'block';
                     
                 } else {
-                    // Usuario no autenticado
                     console.log("No hay usuario autenticado");
                     currentUser = null;
                     appContent.style.display = 'none';
@@ -2064,13 +2797,11 @@
             } catch (error) {
                 console.error("Error en el cambio de estado de autenticación:", error);
                 
-                // Mostrar error al usuario
                 const errorMessage = error.message || "Error desconocido al configurar la sesión";
                 
-                // Crear elemento de error
                 const errorElement = document.createElement('div');
                 errorElement.className = 'card';
-                errorElement.style.backgroundColor = 'rgba(237, 85, 101, 0.2)';
+                errorElement.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
                 errorElement.style.borderLeft = '3px solid var(--danger)';
                 errorElement.innerHTML = `
                     <h3 style="color: var(--danger);">Error de autenticación</h3>
@@ -2078,10 +2809,8 @@
                     <button class="btn btn-sm" onclick="window.location.reload()">Recargar página</button>
                 `;
                 
-                // Insertar en el cuerpo del documento
                 document.body.insertBefore(errorElement, document.body.firstChild);
                 
-                // Forzar cierre de sesión en caso de error
                 try {
                     await auth.signOut();
                 } catch (signOutError) {
@@ -2090,19 +2819,13 @@
             }
         });
 
-        // Inicialización
         function init() {
-            // Verificar si hay un parámetro de grupo en la URL
             const urlParams = new URLSearchParams(window.location.search);
             const joinGroup = urlParams.get('join_group');
             const inviteCode = urlParams.get('code');
             
             if (joinGroup && inviteCode) {
-                // Aquí podrías implementar la lógica para unirse a un grupo con código de invitación
-                // Por ahora solo mostramos un mensaje
                 alert(`Has sido invitado a unirte al grupo ${joinGroup} con código ${inviteCode}. Inicia sesión para continuar.`);
-                
-                // Limpiar la URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
