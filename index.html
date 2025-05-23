@@ -270,6 +270,7 @@
             font-weight: bold;
             color: white;
             background-color: var(--primary);
+            object-fit: cover;
         }
 
         .post-meta {
@@ -297,10 +298,18 @@
             gap: 5px;
             cursor: pointer;
             transition: color 0.3s;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
         .action-btn:hover {
             color: var(--primary);
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .action-btn.liked {
+            color: var(--primary);
+            font-weight: bold;
         }
 
         .comments-section {
@@ -441,6 +450,7 @@
             color: white;
             margin-right: 10px;
             background-color: var(--accent);
+            object-fit: cover;
         }
 
         .group-name {
@@ -466,6 +476,7 @@
             margin-right: 5px;
             background-color: #e0e7f1;
             color: var(--primary);
+            object-fit: cover;
         }
 
         .group-last-message {
@@ -489,6 +500,7 @@
             display: flex;
             border-bottom: 1px solid #eee;
             margin-bottom: 15px;
+            justify-content: center;
         }
 
         .tab {
@@ -498,6 +510,8 @@
             transition: all 0.3s;
             border-bottom: 2px solid transparent;
             font-size: 0.9rem;
+            text-align: center;
+            flex: 1;
         }
 
         .tab:hover {
@@ -619,6 +633,7 @@
             margin-bottom: 15px;
             border: 3px solid var(--primary);
             background-color: #f0f4f8;
+            object-fit: cover;
         }
 
         .invite-link-container {
@@ -758,6 +773,19 @@
             .chat-panel {
                 height: 400px;
             }
+        }
+
+        .delete-post-btn {
+            background: none;
+            border: none;
+            color: #777;
+            cursor: pointer;
+            transition: color 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .delete-post-btn:hover {
+            color: var(--danger);
         }
     </style>
 </head>
@@ -1034,6 +1062,7 @@
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button class="btn btn-success" id="save-group-changes-btn">Guardar cambios</button>
                     <button class="btn btn-danger" id="delete-group-btn">Eliminar grupo</button>
+                    <button class="btn btn-warning" id="leave-group-btn">Salir del grupo</button>
                 </div>
             </div>
         </div>
@@ -1091,7 +1120,8 @@
             currentInviteGroup: null,
             currentManagedGroup: null,
             usernameChangeDate: null,
-            onlineUsers: []
+            onlineUsers: [],
+            lastMessageSent: null // Para evitar duplicados
         };
 
         // DOM Elements
@@ -1146,6 +1176,7 @@
         const muteGroupSelect = document.getElementById('mute-group');
         const saveGroupChangesBtn = document.getElementById('save-group-changes-btn');
         const deleteGroupBtn = document.getElementById('delete-group-btn');
+        const leaveGroupBtn = document.getElementById('leave-group-btn');
         const groupManagementTitle = document.getElementById('group-management-title');
 
         // Funciones auxiliares
@@ -1164,6 +1195,10 @@
 
         function getGroupById(id) {
             return groups.find(group => group.id === id);
+        }
+
+        function getPostById(id) {
+            return posts.find(post => post.id === id);
         }
 
         function generateRandomString(length) {
@@ -1219,6 +1254,9 @@
             
             posts.forEach(post => {
                 const user = getUserById(post.userId);
+                const isPostOwner = post.userId === currentUser.id;
+                const liked = post.likes && post.likes.includes(currentUser.id);
+                const likesCount = post.likes ? post.likes.length : 0;
                 
                 const postElement = document.createElement('div');
                 postElement.className = 'card post';
@@ -1233,27 +1271,32 @@
                                 <div class="post-meta">${formatDate(post.date)}</div>
                             </div>
                         </div>
+                        ${isPostOwner ? `
+                            <button class="delete-post-btn" data-post-id="${post.id}" title="Eliminar publicación">
+                                🗑️
+                            </button>
+                        ` : ''}
                     </div>
                     <h3>${post.title}</h3>
                     <div class="post-content">${post.content}</div>
                     
-                    ${post.imageUrl ? `<img src="${post.imageUrl}" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px;">` : ''}
+                    ${post.imageUrl ? `<img src="${post.imageUrl}" style="max-width: 100%; border-radius: 8px; margin-bottom: 15px; max-height: 400px; object-fit: contain;">` : ''}
                     
                     ${post.fileUrl ? `<a href="${post.fileUrl}" class="btn btn-secondary" style="margin-bottom: 15px;" download>Descargar archivo adjunto</a>` : ''}
                     
                     <div class="post-actions">
-                        <button class="action-btn">
-                            <span>👍</span> <span>12</span>
+                        <button class="action-btn ${liked ? 'liked' : ''}" data-post-id="${post.id}" data-action="like">
+                            <span>👍</span> <span>${likesCount}</span>
                         </button>
-                        <button class="action-btn">
+                        <button class="action-btn" data-post-id="${post.id}" data-action="comment">
                             <span>💬</span> <span>${post.comments ? post.comments.length : 0}</span>
                         </button>
-                        <button class="action-btn">
+                        <button class="action-btn" data-post-id="${post.id}" data-action="share">
                             <span>🔗</span> <span>Compartir</span>
                         </button>
                     </div>
                     
-                    <div class="comments-section">
+                    <div class="comments-section" id="comments-${post.id}" style="display: none;">
                         <h4>Comentarios</h4>
                         ${post.comments && post.comments.length > 0 ? 
                             post.comments.map(comment => {
@@ -1290,6 +1333,88 @@
             document.querySelectorAll('.comment-form').forEach(form => {
                 form.addEventListener('submit', handleCommentSubmit);
             });
+
+            // Agregar event listeners a los botones de acciones
+            document.querySelectorAll('.action-btn[data-action="like"]').forEach(btn => {
+                btn.addEventListener('click', handleLikePost);
+            });
+
+            document.querySelectorAll('.action-btn[data-action="comment"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const postId = this.dataset.postId;
+                    const commentsSection = document.getElementById(`comments-${postId}`);
+                    commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+
+            // Agregar event listeners a los botones de eliminar
+            document.querySelectorAll('.delete-post-btn').forEach(btn => {
+                btn.addEventListener('click', handleDeletePost);
+            });
+        }
+
+        // Función para manejar el "Me gusta" en publicaciones
+        async function handleLikePost(e) {
+            const postId = e.currentTarget.dataset.postId;
+            const post = getPostById(postId);
+            
+            try {
+                const isLiked = post.likes && post.likes.includes(currentUser.id);
+                
+                if (isLiked) {
+                    // Quitar like
+                    await postsRef.doc(postId).update({
+                        likes: firebase.firestore.FieldValue.arrayRemove(currentUser.id)
+                    });
+                    
+                    post.likes = post.likes.filter(id => id !== currentUser.id);
+                } else {
+                    // Dar like
+                    await postsRef.doc(postId).update({
+                        likes: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
+                    });
+                    
+                    if (!post.likes) post.likes = [];
+                    post.likes.push(currentUser.id);
+                }
+                
+                renderPosts();
+                
+            } catch (error) {
+                console.error("Error al dar/quitar like:", error);
+                alert("Error al procesar tu 'Me gusta'. Por favor intenta nuevamente.");
+            }
+        }
+
+        // Función para manejar la eliminación de publicaciones
+        async function handleDeletePost(e) {
+            const postId = e.currentTarget.dataset.postId;
+            const post = getPostById(postId);
+            
+            if (confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
+                try {
+                    // Eliminar la publicación de Firestore
+                    await postsRef.doc(postId).delete();
+                    
+                    // Eliminar los comentarios asociados
+                    const commentsSnapshot = await commentsRef.doc(postId)
+                        .collection('post_comments')
+                        .get();
+                    
+                    const deletePromises = commentsSnapshot.docs.map(doc => doc.ref.delete());
+                    await Promise.all(deletePromises);
+                    
+                    // Actualizar localmente
+                    posts = posts.filter(p => p.id !== postId);
+                    renderPosts();
+                    
+                    alert('Publicación eliminada con éxito');
+                    
+                } catch (error) {
+                    console.error("Error al eliminar publicación:", error);
+                    alert("Error al eliminar la publicación. Por favor intenta nuevamente.");
+                }
+            }
         }
 
         // Función para manejar el envío de comentarios
@@ -1490,6 +1615,11 @@
                                     Silenciar
                                 </button>
                             `}
+                            ${!isCreator ? `
+                                <button class="btn btn-danger btn-sm leave-group-btn">
+                                    Salir
+                                </button>
+                            ` : ''}
                         </div>
                     `;
                     
@@ -1923,7 +2053,8 @@
                     imageUrl: imageUrl,
                     fileUrl: fileUrl,
                     date: new Date().toISOString(),
-                    comments: []
+                    comments: [],
+                    likes: []
                 };
                 
                 const docRef = await postsRef.add(newPost);
@@ -1947,6 +2078,12 @@
             const input = document.getElementById('chat-input');
             const messageText = input.value.trim();
             
+            // Evitar mensajes duplicados
+            if (messageText === state.lastMessageSent) {
+                input.value = '';
+                return;
+            }
+            
             if (messageText) {
                 try {
                     const newMessage = {
@@ -1955,6 +2092,8 @@
                         time: new Date().toISOString(),
                         read: false
                     };
+                    
+                    state.lastMessageSent = messageText;
                     
                     if (state.currentGroup) {
                         const group = getGroupById(state.currentGroup);
@@ -2027,180 +2166,215 @@
         });
 
         // Seleccionar grupo o mensaje directo
-        // Reemplazar el event listener existente de groupsList con este:
-groupsList.addEventListener('click', async function(e) {
-    const groupCard = e.target.closest('.group-card');
-    const inviteBtn = e.target.closest('.invite-group-btn');
-    const manageBtn = e.target.closest('.manage-group-btn');
-    const muteBtn = e.target.closest('.mute-group-btn');
-    const unmuteBtn = e.target.closest('.unmute-group-btn');
-    const removeMemberBtn = e.target.closest('.remove-member-btn');
-    const joinBtn = e.target.closest('.join-group-btn');  // Nuevo selector específico para el botón de unirse
-    
-    // Manejar clic en el botón "Unirse al Grupo"
-    if (joinBtn) {
-        const groupCard = joinBtn.closest('.group-card');
-        const groupId = groupCard.dataset.groupId;
-        const group = getGroupById(groupId);
-        
-        if (group && group.privacy === 'public') {
-            try {
-                // Verificar si ya es miembro (por si acaso)
-                if (group.members.includes(currentUser.id)) {
-                    alert(`Ya eres miembro del grupo ${group.name}`);
-                    return;
-                }
-                
-                // Actualizar en Firestore
-                await groupsRef.doc(groupId).update({
-                    members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
-                });
-                
-                // Actualizar localmente
-                group.members.push(currentUser.id);
-                
-                // Mostrar feedback al usuario
-                alert(`¡Te has unido al grupo ${group.name}!`);
-                
-                // Actualizar la interfaz
-                renderGroups();
-                
-                // Cambiar a la pestaña "Mis Grupos" automáticamente
-                document.querySelector('.tab[data-tab="my-groups"]').click();
-                
-            } catch (error) {
-                console.error("Error al unirse al grupo:", error);
-                alert("Error al unirse al grupo: " + error.message);
-            }
-        }
-        return;
-    }
-    
-    // Resto del código existente para otros botones...
-    if (inviteBtn) {
-        const groupCard = inviteBtn.closest('.group-card');
-        const groupId = groupCard.dataset.groupId;
-        showInviteModal(groupId);
-        return;
-    }
-    
-    if (manageBtn) {
-        const groupCard = manageBtn.closest('.group-card');
-        const groupId = groupCard.dataset.groupId;
-        showGroupManagementModal(groupId);
-        return;
-    }
-    
-    if (muteBtn) {
-        const groupCard = muteBtn.closest('.group-card');
-        const groupId = groupCard.dataset.groupId;
-        const group = getGroupById(groupId);
-        
-        try {
-            await groupsRef.doc(groupId).update({
-                mutedUntil: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 horas
-            });
+        groupsList.addEventListener('click', async function(e) {
+            const groupCard = e.target.closest('.group-card');
+            const inviteBtn = e.target.closest('.invite-group-btn');
+            const manageBtn = e.target.closest('.manage-group-btn');
+            const muteBtn = e.target.closest('.mute-group-btn');
+            const unmuteBtn = e.target.closest('.unmute-group-btn');
+            const removeMemberBtn = e.target.closest('.remove-member-btn');
+            const joinBtn = e.target.closest('.join-group-btn');
+            const leaveBtn = e.target.closest('.leave-group-btn');
             
-            group.mutedUntil = new Date(Date.now() + 8 * 60 * 60 * 1000);
-            renderGroups();
-            alert('Has silenciado las notificaciones de este grupo por 8 horas');
-            
-        } catch (error) {
-            console.error("Error al silenciar grupo:", error);
-            alert("Error al silenciar el grupo: " + error.message);
-        }
-        return;
-    }
-    
-    if (unmuteBtn) {
-        const groupCard = unmuteBtn.closest('.group-card');
-        const groupId = groupCard.dataset.groupId;
-        const group = getGroupById(groupId);
-        
-        try {
-            await groupsRef.doc(groupId).update({
-                mutedUntil: null
-            });
-            
-            group.mutedUntil = null;
-            renderGroups();
-            alert('Has reactivado las notificaciones de este grupo');
-            
-        } catch (error) {
-            console.error("Error al reactivar notificaciones:", error);
-            alert("Error al reactivar las notificaciones: " + error.message);
-        }
-        return;
-    }
-    
-    if (removeMemberBtn) {
-        const memberId = removeMemberBtn.dataset.memberId;
-        const groupId = state.currentManagedGroup;
-        
-        if (confirm(`¿Estás seguro de que quieres eliminar a este miembro del grupo?`)) {
-            try {
-                await groupsRef.doc(groupId).update({
-                    members: firebase.firestore.FieldValue.arrayRemove(memberId)
-                });
-                
+            // Manejar clic en el botón "Unirse al Grupo"
+            if (joinBtn) {
+                const groupCard = joinBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
                 const group = getGroupById(groupId);
-                group.members = group.members.filter(id => id !== memberId);
                 
-                renderGroupMembersList(groupId);
-                renderGroups();
-                alert('Miembro eliminado del grupo');
-                
-            } catch (error) {
-                console.error("Error al eliminar miembro:", error);
-                alert("Error al eliminar miembro: " + error.message);
-            }
-        }
-        return;
-    }
-    
-    if (groupCard) {
-        const groupId = groupCard.dataset.groupId;
-        const dmId = groupCard.dataset.dmId;
-        
-        if (groupId) {
-            const group = getGroupById(groupId);
-            
-            if (!group.members.includes(currentUser.id)) {
+                if (group && group.privacy === 'public') {
+                    try {
+                        // Verificar si ya es miembro (por si acaso)
+                        if (group.members.includes(currentUser.id)) {
+                            alert(`Ya eres miembro del grupo ${group.name}`);
+                            return;
+                        }
+                        
+                        // Actualizar en Firestore
+                        await groupsRef.doc(groupId).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(currentUser.id)
+                        });
+                        
+                        // Actualizar localmente
+                        group.members.push(currentUser.id);
+                        
+                        // Mostrar feedback al usuario
+                        alert(`¡Te has unido al grupo ${group.name}!`);
+                        
+                        // Actualizar la interfaz
+                        renderGroups();
+                        
+                        // Cambiar a la pestaña "Mis Grupos" automáticamente
+                        document.querySelector('.tab[data-tab="my-groups"]').click();
+                        
+                    } catch (error) {
+                        console.error("Error al unirse al grupo:", error);
+                        alert("Error al unirse al grupo: " + error.message);
+                    }
+                }
                 return;
             }
             
-            group.unread = 0;
-            state.currentGroup = groupId;
-            state.currentDirectMessage = null;
-            
-            renderChatMessages();
-            renderGroups();
-        } else if (dmId) {
-            const dm = directMessages.find(dm => dm.id === dmId);
-            
-            // Marcar mensajes como leídos
-            if (dm.messages) {
-                dm.messages.forEach(async msg => {
-                    if (msg.userId !== currentUser.id && !msg.read) {
-                        await directMessagesRef
-                            .doc(dmId)
-                            .collection('messages')
-                            .doc(msg.id)
-                            .update({ read: true });
+            // Manejar clic en el botón "Salir del Grupo"
+            if (leaveBtn) {
+                const groupCard = leaveBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                if (confirm(`¿Estás seguro de que quieres salir del grupo "${group.name}"?`)) {
+                    try {
+                        // Actualizar en Firestore
+                        await groupsRef.doc(groupId).update({
+                            members: firebase.firestore.FieldValue.arrayRemove(currentUser.id)
+                        });
                         
-                        msg.read = true;
+                        // Actualizar localmente
+                        group.members = group.members.filter(id => id !== currentUser.id);
+                        
+                        // Si estábamos en ese grupo, salir
+                        if (state.currentGroup === groupId) {
+                            state.currentGroup = null;
+                            renderChatMessages();
+                        }
+                        
+                        // Mostrar feedback al usuario
+                        alert(`Has salido del grupo ${group.name}`);
+                        
+                        // Actualizar la interfaz
+                        renderGroups();
+                        
+                    } catch (error) {
+                        console.error("Error al salir del grupo:", error);
+                        alert("Error al salir del grupo: " + error.message);
                     }
-                });
+                }
+                return;
             }
             
-            state.currentDirectMessage = dmId;
-            state.currentGroup = null;
+            if (inviteBtn) {
+                const groupCard = inviteBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                showInviteModal(groupId);
+                return;
+            }
             
-            renderChatMessages();
-            renderGroups();
-        }
-    }
-});
+            if (manageBtn) {
+                const groupCard = manageBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                showGroupManagementModal(groupId);
+                return;
+            }
+            
+            if (muteBtn) {
+                const groupCard = muteBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                try {
+                    await groupsRef.doc(groupId).update({
+                        mutedUntil: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 horas
+                    });
+                    
+                    group.mutedUntil = new Date(Date.now() + 8 * 60 * 60 * 1000);
+                    renderGroups();
+                    alert('Has silenciado las notificaciones de este grupo por 8 horas');
+                    
+                } catch (error) {
+                    console.error("Error al silenciar grupo:", error);
+                    alert("Error al silenciar el grupo: " + error.message);
+                }
+                return;
+            }
+            
+            if (unmuteBtn) {
+                const groupCard = unmuteBtn.closest('.group-card');
+                const groupId = groupCard.dataset.groupId;
+                const group = getGroupById(groupId);
+                
+                try {
+                    await groupsRef.doc(groupId).update({
+                        mutedUntil: null
+                    });
+                    
+                    group.mutedUntil = null;
+                    renderGroups();
+                    alert('Has reactivado las notificaciones de este grupo');
+                    
+                } catch (error) {
+                    console.error("Error al reactivar notificaciones:", error);
+                    alert("Error al reactivar las notificaciones: " + error.message);
+                }
+                return;
+            }
+            
+            if (removeMemberBtn) {
+                const memberId = removeMemberBtn.dataset.memberId;
+                const groupId = state.currentManagedGroup;
+                
+                if (confirm(`¿Estás seguro de que quieres eliminar a este miembro del grupo?`)) {
+                    try {
+                        await groupsRef.doc(groupId).update({
+                            members: firebase.firestore.FieldValue.arrayRemove(memberId)
+                        });
+                        
+                        const group = getGroupById(groupId);
+                        group.members = group.members.filter(id => id !== memberId);
+                        
+                        renderGroupMembersList(groupId);
+                        renderGroups();
+                        alert('Miembro eliminado del grupo');
+                        
+                    } catch (error) {
+                        console.error("Error al eliminar miembro:", error);
+                        alert("Error al eliminar miembro: " + error.message);
+                    }
+                }
+                return;
+            }
+            
+            if (groupCard) {
+                const groupId = groupCard.dataset.groupId;
+                const dmId = groupCard.dataset.dmId;
+                
+                if (groupId) {
+                    const group = getGroupById(groupId);
+                    
+                    if (!group.members.includes(currentUser.id)) {
+                        return;
+                    }
+                    
+                    group.unread = 0;
+                    state.currentGroup = groupId;
+                    state.currentDirectMessage = null;
+                    
+                    renderChatMessages();
+                    renderGroups();
+                } else if (dmId) {
+                    const dm = directMessages.find(dm => dm.id === dmId);
+                    
+                    // Marcar mensajes como leídos
+                    if (dm.messages) {
+                        dm.messages.forEach(async msg => {
+                            if (msg.userId !== currentUser.id && !msg.read) {
+                                await directMessagesRef
+                                    .doc(dmId)
+                                    .collection('messages')
+                                    .doc(msg.id)
+                                    .update({ read: true });
+                                
+                                msg.read = true;
+                            }
+                        });
+                    }
+                    
+                    state.currentDirectMessage = dmId;
+                    state.currentGroup = null;
+                    
+                    renderChatMessages();
+                    renderGroups();
+                }
+            }
+        });
 
         createGroupBtn.addEventListener('click', function() {
             createGroupForm.style.display = 'block';
@@ -2515,6 +2689,42 @@ groupsList.addEventListener('click', async function(e) {
                 } catch (error) {
                     console.error("Error al eliminar grupo:", error);
                     alert("Error al eliminar el grupo: " + error.message);
+                }
+            }
+        });
+
+        leaveGroupBtn.addEventListener('click', async function() {
+            const groupId = state.currentManagedGroup;
+            const group = getGroupById(groupId);
+            
+            if (confirm(`¿Estás seguro de que quieres salir del grupo "${group.name}"?`)) {
+                try {
+                    // Actualizar en Firestore
+                    await groupsRef.doc(groupId).update({
+                        members: firebase.firestore.FieldValue.arrayRemove(currentUser.id)
+                    });
+                    
+                    // Actualizar localmente
+                    group.members = group.members.filter(id => id !== currentUser.id);
+                    
+                    // Si estábamos en ese grupo, salir
+                    if (state.currentGroup === groupId) {
+                        state.currentGroup = null;
+                        renderChatMessages();
+                    }
+                    
+                    // Cerrar el modal
+                    groupManagementModal.style.display = 'none';
+                    
+                    // Mostrar feedback al usuario
+                    alert(`Has salido del grupo ${group.name}`);
+                    
+                    // Actualizar la interfaz
+                    renderGroups();
+                    
+                } catch (error) {
+                    console.error("Error al salir del grupo:", error);
+                    alert("Error al salir del grupo: " + error.message);
                 }
             }
         });
